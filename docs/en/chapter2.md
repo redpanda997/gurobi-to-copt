@@ -83,7 +83,7 @@ vals = m.getInfo(COPT.Info.Value, x)     # tupledict with the same keys as x
 | Number of variables | `m.NumVars` | `m.cols` | |
 | Delete a variable | `m.remove(x)` | `m.remove(x)` | |
 | Change type | `x.VType = GRB.INTEGER` | `x.vtype = COPT.INTEGER` or `m.setVarType(x, COPT.INTEGER)` | |
-| Change bounds | `x.LB = 0; x.UB = 5` | `x.lb = 0; x.ub = 5` | |
+| Change bounds | `x.LB = 0; x.UB = 5` | `x.LB = 0; x.UB = 5` | Same name |
 | Bulk read / write attributes | `m.getAttr("LB", vars)` / `m.setAttr("LB", vars, vals)` | `m.getInfo(COPT.Info.LB, vars)` / `m.setInfo(COPT.Info.LB, vars, vals)` | Gurobi uses attribute-name strings; COPT uses `COPT.Info.*` constants |
 
 **Bounds and infinity**: `GRB.INFINITY` is `1e100`, `COPT.INFINITY` is `1e30`. According to the COPT documentation, a bound is treated as infinite once its absolute value reaches `1e30`, so a `1e100` left in old code is also recognized as unbounded by COPT. The reverse does not hold: a `1e30` read from COPT is a finite value to Gurobi. Use the `COPT.INFINITY` constant throughout.
@@ -182,10 +182,10 @@ m.setObjective(expr, COPT.MINIMIZE)
 | Operation | Gurobi | COPT | Notes |
 |---|---|---|---|
 | Set the objective | `m.setObjective(expr, GRB.MAXIMIZE)` | `m.setObjective(expr, COPT.MAXIMIZE)` | Identical |
-| Change only the sense | `m.ModelSense = GRB.MINIMIZE` | `m.objsense = COPT.MINIMIZE` or `m.setObjSense(COPT.MINIMIZE)` | |
-| Objective constant | `m.ObjCon = 5` | `m.objconst = 5` or `m.setObjConst(5)` | |
+| **Change only the sense** | **`m.ModelSense = GRB.MINIMIZE`** | **`m.ObjSense = COPT.MINIMIZE`** or `m.setObjSense(COPT.MINIMIZE)` | |
+| **Objective constant** | **`m.ObjCon = 5`** | **`m.ObjConst = 5`** or `m.setObjConst(5)` | |
 | Read the objective expression | `m.getObjective()` | `m.getObjective()` | |
-| Objective coefficient of a variable | `x.Obj` | `x.obj` | |
+| Objective coefficient of a variable | `x.Obj` | `x.Obj` | Same name |
 | Multiple objectives | `m.setObjectiveN(expr, index, priority, weight, ...)` | `m.setObjectiveN(index, expr, sense, priority, weight, ...)` | **Different argument order**, Chapter 4 |
 | Matrix-form objective | `m.setMObjective(...)` | `m.setMObjective(...)` | Chapter 4 |
 | Add terms to a linear expression | `expr.addTerms(coeffs, vars)` | `expr.addTerm(var, coeff)` / `expr.addTerms(vars, coeffs)` | **Reversed argument order**, see above |
@@ -201,8 +201,8 @@ The solve method has a different name (`optimize()` vs `solve()`), the status co
 | Solve the LP relaxation / an LP only | `m.relax().optimize()` | `m.solveLP()` (ignores integrality and solves the LP) |
 | Interrupt | `m.terminate()` | `m.interrupt()` |
 | Clear the solution | `m.reset()` / `m.reset(1)` | `m.reset()` / `m.resetAll()` (the latter also clears additional information such as MIP starts and the IIS) |
-| Read the status | `m.Status` | `m.status` |
-| Is a solution available? | `m.SolCount > 0` | `m.hassol` (the older `hasmipsol` / `haslpsol` are marked deprecated in the 8.0 documentation) |
+| Read the status | `m.Status` | `m.Status` |
+| Is a solution available? | `m.SolCount > 0` | `m.HasSol` (the older `HasMipSol` / `HasLpSol` are marked deprecated in the 8.0 documentation) |
 
 Status code mapping. Use constants on both sides; do not write the numeric values:
 
@@ -278,23 +278,23 @@ m.loadMipStart()
 
 </div>
 
-The COPT column shows the lowercase spelling used in the COPT documentation. **Bold** rows are attributes whose names actually differ and must be edited; the other rows share the same name on both sides and, per the COPT documentation, can be accessed in original case or lowercase — so the Gurobi spelling can stay.
+The COPT column lists attribute names in the original case used by the COPT documentation (model attributes such as `ObjVal` and `BestGap`, variable / constraint information items such as `Value`, `RedCost` and `Dual`). Per the COPT documentation these names can also be accessed in all lowercase (`m.objval`, `x.value`); `x.x`, `x.rc`, `c.pi` and `name`, `vtype`, `basis`, `index` are additional shorthand attributes from the documentation that exist only in lowercase. **Bold** rows are attributes whose names actually differ and must be edited; the other rows share the same name on both sides, so the Gurobi spelling can stay.
 
 **Variable attributes**
 
 | Meaning | Gurobi | COPT | Notes |
 |---|---|---|---|
-| **Solution value** | **`x.X`** | **`x.x` (or `x.value`)** | Corresponds to the COPT information item `Value` |
+| **Solution value** | **`x.X`** | **`x.Value`** (shorthand `x.x`) | |
 | **Name** | **`x.VarName`** | **`x.name`** | |
-| Lower / upper bound | `x.LB` / `x.UB` | `x.lb` / `x.ub` | |
-| Objective coefficient | `x.Obj` | `x.obj` | |
+| Lower / upper bound | `x.LB` / `x.UB` | `x.LB` / `x.UB` | |
+| Objective coefficient | `x.Obj` | `x.Obj` | |
 | **Type** | **`x.VType`** | **`x.vtype`** | |
-| **Reduced cost (LP)** | **`x.RC`** | **`x.rc`** | Information item `RedCost`; available for LPs or when an LP solution exists |
+| **Reduced cost (LP)** | **`x.RC`** | **`x.RedCost`** (shorthand `x.rc`) | Available for LPs or when an LP solution exists |
 | **Basis status** | **`x.VBasis`** | **`x.basis`** | Different encoding (see 2.8) |
 | **MIP start** | **`x.Start = v`** | **`m.setMipStart(x, v)` + `m.loadMipStart()`** | Chapter 3 |
 | **k-th solution from the pool** | **`m.Params.SolutionNumber = k; x.PoolNX`** | **`m.getPoolSolution(k, vars)`** | `Xn` is deprecated since Gurobi 13 in favor of `PoolNX`; Chapter 4 |
-| Sensitivity analysis | `x.SAObjLow/Up`, `x.SALBLow/Up`, `x.SAUBLow/Up` | `x.saobjlow/up`, `x.salblow/up`, `x.saublow/up` | Not computed by default in COPT; set `ReqSensitivity = 1` to enable |
-| **Unbounded ray** | **`x.UnbdRay`** | **`x.primalray`** | Must be enabled on both sides: Gurobi `InfUnbdInfo = 1`, COPT `ReqFarkasRay = 1` |
+| Sensitivity analysis | `x.SAObjLow/Up`, `x.SALBLow/Up`, `x.SAUBLow/Up` | `x.SAObjLow/Up`, `x.SALBLow/Up`, `x.SAUBLow/Up` | Same names; not computed by default in COPT, set `ReqSensitivity = 1` to enable |
+| **Unbounded ray** | **`x.UnbdRay`** | **`x.PrimalRay`** | Must be enabled on both sides: Gurobi `InfUnbdInfo = 1`, COPT `ReqFarkasRay = 1` |
 | **IIS membership** | **`x.IISLB` / `x.IISUB`** | **`x.getLowerIIS()` / `x.getUpperIIS()`** | After `computeIIS()` |
 | Index | `x.index` | `x.index` | |
 
@@ -303,11 +303,11 @@ The COPT column shows the lowercase spelling used in the COPT documentation. **B
 | Meaning | Gurobi | COPT | Notes |
 |---|---|---|---|
 | **Name** | **`c.ConstrName`** | **`c.name`** | |
-| **Right-hand side / sense** | **`c.RHS` / `c.Sense`** | **`c.lb` / `c.ub`** | Two-sided representation, see 2.3 |
-| **Dual value (shadow price)** | **`c.Pi`** | **`c.pi` (or `c.dual`)** | Information item `Dual`; available for LPs or when an LP solution exists |
-| Slack | `c.Slack` | `c.slack` | |
+| **Right-hand side / sense** | **`c.RHS` / `c.Sense`** | **`c.LB` / `c.UB`** | Two-sided representation, see 2.3 |
+| **Dual value (shadow price)** | **`c.Pi`** | **`c.Dual`** (shorthand `c.pi`) | Available for LPs or when an LP solution exists |
+| Slack | `c.Slack` | `c.Slack` | |
 | **Basis status** | **`c.CBasis`** | **`c.basis`** | |
-| **Farkas dual** | **`c.FarkasDual`** | **`c.dualfarkas`** | Must be enabled on both sides: Gurobi `InfUnbdInfo = 1`, COPT `ReqFarkasRay = 1` |
+| **Farkas dual** | **`c.FarkasDual`** | **`c.DualFarkas`** | Must be enabled on both sides: Gurobi `InfUnbdInfo = 1`, COPT `ReqFarkasRay = 1` |
 | **IIS membership** | **`c.IISConstr`** | **`c.getLowerIIS()` / `c.getUpperIIS()`** | COPT distinguishes whether the lower or the upper bound is in the IIS |
 | Index | `c.index` | `c.index` | |
 
@@ -315,23 +315,23 @@ The COPT column shows the lowercase spelling used in the COPT documentation. **B
 
 | Meaning | Gurobi | COPT | Notes |
 |---|---|---|---|
-| Solve status | `m.Status` | `m.status` | |
-| Objective value | `m.ObjVal` | `m.objval` | |
-| Objective bound | `m.ObjBound` | `m.objbound` | The older `bestbnd` is marked deprecated in the 8.0 documentation |
-| **Relative gap** | **`m.MIPGap`** | **`m.bestgap`** | |
-| **Solve time** | **`m.Runtime`** | **`m.solvingtime`** | |
-| **Node count** | **`m.NodeCount`** | **`m.nodecnt`** | |
-| **Simplex iterations** | **`m.IterCount`** | **`m.simplexiter`** | |
-| **Barrier iterations** | **`m.BarIterCount`** | **`m.barrieriter`** | |
-| **Number of pool solutions** | **`m.SolCount`** | **`m.poolsols`** | |
-| **Number of variables / constraints / nonzeros** | **`m.NumVars` / `m.NumConstrs` / `m.NumNZs`** | **`m.cols` / `m.rows` / `m.elems`** | |
-| **Number of integer / binary variables** | **`m.NumIntVars` / `m.NumBinVars`** | **`m.ints` / `m.bins`** | |
-| **Number of quadratic constraints / SOS** | **`m.NumQConstrs` / `m.NumSOS`** | **`m.qconstrs` / `m.soss`** | |
-| Is a MIP | `m.IsMIP` | `m.ismip` | |
-| **Has a quadratic objective** | **`m.IsQP`** | **`m.hasqobj`** | |
-| **Objective sense / constant** | **`m.ModelSense` / `m.ObjCon`** | **`m.objsense` / `m.objconst`** | |
-| **Solution available** | **`m.SolCount > 0`** | **`m.hassol`** | |
-| **Coefficient ranges** | **`m.MaxCoeff/MinCoeff`, `m.MaxRHS/MinRHS`, `m.MaxObjCoeff/MinObjCoeff`** | **`m.maxelem/minelem`, `m.maxrhs/minrhs`, `m.maxcost/mincost`** | |
+| Solve status | `m.Status` | `m.Status` | |
+| Objective value | `m.ObjVal` | `m.ObjVal` | |
+| Objective bound | `m.ObjBound` | `m.ObjBound` | The older `BestBnd` is marked deprecated in the 8.0 documentation |
+| **Relative gap** | **`m.MIPGap`** | **`m.BestGap`** | |
+| **Solve time** | **`m.Runtime`** | **`m.SolvingTime`** | |
+| **Node count** | **`m.NodeCount`** | **`m.NodeCnt`** | |
+| **Simplex iterations** | **`m.IterCount`** | **`m.SimplexIter`** | |
+| **Barrier iterations** | **`m.BarIterCount`** | **`m.BarrierIter`** | |
+| **Number of pool solutions** | **`m.SolCount`** | **`m.PoolSols`** | |
+| **Number of variables / constraints / nonzeros** | **`m.NumVars` / `m.NumConstrs` / `m.NumNZs`** | **`m.Cols` / `m.Rows` / `m.Elems`** | |
+| **Number of integer / binary variables** | **`m.NumIntVars` / `m.NumBinVars`** | **`m.Ints` / `m.Bins`** | |
+| **Number of quadratic constraints / SOS** | **`m.NumQConstrs` / `m.NumSOS`** | **`m.QConstrs` / `m.Soss`** | |
+| Is a MIP | `m.IsMIP` | `m.IsMIP` | |
+| **Has a quadratic objective** | **`m.IsQP`** | **`m.HasQObj`** | |
+| **Objective sense / constant** | **`m.ModelSense` / `m.ObjCon`** | **`m.ObjSense` / `m.ObjConst`** | |
+| **Solution available** | **`m.SolCount > 0`** | **`m.HasSol`** | |
+| **Coefficient ranges** | **`m.MaxCoeff/MinCoeff`, `m.MaxRHS/MinRHS`, `m.MaxObjCoeff/MinObjCoeff`** | **`m.MaxElem/MinElem`, `m.MaxRHS/MinRHS`, `m.MaxCost/MinCost`** | |
 
 **Bulk reads**
 
