@@ -10,7 +10,7 @@
 
 ## Outline
 
-This guide has seven chapters. Chapters 1 and 2 are published now; the rest will follow.
+This guide has seven chapters. Chapters 1 and 2 are published now; the rest will follow. The basic replacement rules follow the comparison table [COPTPY-GUROBIPY](https://github.com/leavesgrp/COPTPY-GUROBIPY) maintained by the COPT team, extended here with item-by-item mappings for parameters, status codes, attributes and file formats.
 
 | Chapter | Contents | Status |
 |---|---|---|
