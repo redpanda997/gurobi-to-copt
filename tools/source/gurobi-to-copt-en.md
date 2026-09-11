@@ -2,7 +2,7 @@
 
 > **Versions**: Every code sample in this guide was run and verified with gurobipy 13.0.3 and coptpy 8.0.6. APIs evolve; the [Gurobi documentation](https://docs.gurobi.com/) and the [COPT documentation](https://guide.coap.online/copt/en-doc/) are the final authority.
 >
-> **Audience**: Developers who model with gurobipy and want to move existing code to COPT. If you work through a modeling framework rather than calling the solver API directly, skip ahead to Chapter 5 — you usually only need to change the solver name.
+> **Audience**: Developers who model with gurobipy and want to move existing code to COPT. If you work through a modeling framework rather than calling the solver API directly, see Chapter 5; usually only the solver name needs to change.
 
 ---
 
@@ -24,7 +24,7 @@ This guide has seven chapters. Chapters 1 and 2 are published now; the rest will
 
 ## Chapter 1 — Up and running in ten minutes
 
-The goal of this chapter is to get your first Gurobi model running on COPT within ten minutes, and to give you a feel for how close the two APIs are.
+This chapter covers installation, license configuration and two complete examples. It shows how to run a Gurobi model on COPT and how the two APIs correspond.
 
 ### 1.1 Installation
 
@@ -61,7 +61,7 @@ print(COPT.VERSION_MAJOR, COPT.VERSION_MINOR, COPT.VERSION_TECHNICAL)   # e.g. 8
 
 All examples in this guide are small models and run under any type of COPT license.
 
-At startup COPT logs each location it checked for a license. When a license is not picked up, read these lines first:
+At startup COPT logs each location it checked for a license. When a license is not found, these lines are the first thing to check:
 
 ```
 [INFO] checks license for COPT v8.0.6 20260807
@@ -131,21 +131,21 @@ A = 70
 B = 15
 ```
 
-Line by line, only five things changed:
+Compared line by line, the two scripts differ in five places:
 
 | # | Gurobi | COPT | Notes |
 |---|---|---|---|
 | 1 | `import gurobipy as gp` / `from gurobipy import GRB` | `import coptpy as cp` / `from coptpy import COPT` | Constant namespace `GRB` → `COPT` |
 | 2 | `m = gp.Model("production")` | `env = cp.Envr()` <br> `m = env.createModel("production")` | COPT requires an explicit environment `Envr`; models are created from it |
 | 3 | `m.optimize()` | `m.solve()` | Different method name |
-| 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | Same constant name, **different numeric value** (2 vs 1) — always use the constant, never the number |
+| 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | Same constant name, **different numeric value** (2 vs 1); use the constant, not the number |
 | 5 | `v.VarName` / `v.X` | `v.name` / `v.x` | The name attribute is `name` and the solution value is `x`; `m.ObjVal` and `m.Status` work unchanged in COPT, see below |
 
-Good news on item 5: the COPT documentation states that model attributes and variable / constraint information can be accessed either in their **original case** (`m.ObjVal`, `m.Status`, `x.LB`, `x.UB`, `x.Obj`, `c.Slack`) or in **all lowercase** (`m.objval`, `x.lb`). So wherever the two APIs use the same name, the Gurobi spelling can stay. What has to change are the attributes whose *names* differ: `VarName` → `name`, `X` → `x`, `RC` → `rc`, `Pi` → `pi`, `NumVars` → `cols`, `Runtime` → `solvingtime`, and so on; Chapter 2 has the full list. (In practice coptpy's attribute lookup is case-insensitive, so `x.X` and `c.Pi` also run — but this is not guaranteed by the documentation and this guide does not rely on it.) COPT code in this guide uses the lowercase spelling from the COPT documentation.
+Item 5 needs a note. The COPT documentation states that model attributes and variable / constraint information can be accessed either in their **original case** (`m.ObjVal`, `m.Status`, `x.LB`, `x.UB`, `x.Obj`, `c.Slack`) or in **all lowercase** (`m.objval`, `x.lb`). Attributes that share a name on both sides can therefore keep the Gurobi spelling. What has to change are the attributes whose names differ, such as `VarName` → `name`, `X` → `x`, `RC` → `rc`, `Pi` → `pi`, `NumVars` → `cols` and `Runtime` → `solvingtime`; Chapter 2 has the full list. In practice coptpy's attribute lookup is case-insensitive, so `x.X` and `c.Pi` also run, but the documentation does not guarantee this and this guide does not rely on it. COPT code in this guide uses the lowercase spelling from the documentation.
 
 ### 1.4 A more typical example: tupledict, quicksum and shadow prices
 
-Real gurobipy code rarely has two variables. It is usually built from `addVars` + `tupledict` + `quicksum` + `addConstrs`. Here is a transportation problem that also sets a parameter and reads dual values:
+gurobipy code in real projects is usually built with `addVars`, `tupledict`, `quicksum` and `addConstrs`. The following transportation problem uses these, and also sets a parameter and reads dual values.
 
 **Gurobi:**
 
@@ -237,7 +237,7 @@ Total cost = 770
   shadow price M3: 9
 ```
 
-On top of the five changes from 1.3, this example introduces three more — the ones you will meet most often in a migration:
+Besides the five changes from 1.3, this example has three more differences, which are also the most common ones in a migration:
 
 | Gurobi | COPT | Notes |
 |---|---|---|
@@ -249,7 +249,7 @@ On top of the five changes from 1.3, this example introduces three more — the 
 
 ### 1.5 Chapter checklist
 
-To move a gurobipy script to COPT, mechanically apply these seven steps first. Most small and medium scripts run after this:
+To migrate a gurobipy script, apply the following seven replacements first. Most small and medium scripts run after this:
 
 1. `import gurobipy as gp` → `import coptpy as cp`; `GRB` → `COPT`
 2. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
@@ -259,7 +259,7 @@ To move a gurobipy script to COPT, mechanically apply these seven steps first. M
 6. `name=` → `nameprefix=` in `addVars` / `addConstrs`
 7. Renamed attributes: `VarName`/`ConstrName` → `name`, `X` → `x`, `Pi` → `pi`, `RC` → `rc`, `NumVars`/`NumConstrs` → `cols`/`rows`, `Runtime` → `solvingtime`, `MIPGap` → `bestgap` (full list in 2.6)
 
-If your code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the model after solving, continue with Chapters 2 and 3.
+If the code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the model after solving, continue with Chapters 2 and 3.
 
 ---
 
@@ -267,27 +267,27 @@ If your code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the
 
 This chapter follows the modeling workflow: environment & model → variables → constraints → objective → solving & status → reading results → parameters → constants → file I/O. Each table stands on its own as a quick reference.
 
-Three general rules explain most of the differences:
+The following three rules summarize the main differences between the two APIs:
 
-1. **Method names are mostly the same.** `addVar`, `addVars`, `addConstr`, `addConstrs`, `setObjective`, `getVars`, `getConstrs`, `computeIIS`, `write`, `read`, `remove`, `reset`, `tune` and many more share name and meaning on both sides. The most visible exception is `optimize()` → `solve()`.
-2. **Attributes can be accessed in original case or all lowercase, but some attribute names differ.** The COPT documentation states that attribute names may be written in their original case (`m.ObjVal`) or in lowercase (`m.objval`), so attributes that share a name with Gurobi can stay as they are. What you must edit are attributes whose names differ — see 2.6.
-3. **Status codes have different numeric values.** `GRB.OPTIMAL == 2` whereas `COPT.OPTIMAL == 1`. Any code that compares against literal numbers instead of constants will break after migration.
+1. **Method names are mostly the same.** `addVar`, `addVars`, `addConstr`, `addConstrs`, `setObjective`, `getVars`, `getConstrs`, `computeIIS`, `write`, `read`, `remove`, `reset`, `tune` and many more share name and meaning on both sides. The main exception is `optimize()` → `solve()`.
+2. **Attributes can be accessed in original case or all lowercase, but some attribute names differ.** The COPT documentation states that attribute names may be written in their original case (`m.ObjVal`) or in lowercase (`m.objval`), so attributes that share a name with Gurobi can stay. Attributes whose names differ must be edited; see 2.6.
+3. **Status codes have different numeric values.** `GRB.OPTIMAL == 2` whereas `COPT.OPTIMAL == 1`. Code that compares against literal numbers instead of constants fails after migration.
 
 ### 2.1 Environment and model lifecycle
 
 | Operation | Gurobi | COPT | Notes |
 |---|---|---|---|
 | Import | `import gurobipy as gp` <br> `from gurobipy import GRB` | `import coptpy as cp` <br> `from coptpy import COPT` | |
-| Create environment | `env = gp.Env()` (optional — `Model()` creates a default environment implicitly) | `env = cp.Envr()` | COPT always creates the environment explicitly, so license and resource ownership are obvious at a glance |
+| Create environment | `env = gp.Env()` (optional — `Model()` creates a default environment implicitly) | `env = cp.Envr()` | COPT requires an explicit environment; models are created from it |
 | Create model | `m = gp.Model("name", env=env)` | `m = env.createModel("name")` | Models are created from the environment |
-| Model from file | `m = gp.read("model.mps")` | `m = env.createModel()` <br> `m.read("model.mps")` | COPT reads through the model object, so the loaded model belongs to a specific environment from the start |
+| Model from file | `m = gp.read("model.mps")` | `m = env.createModel()` <br> `m.read("model.mps")` | COPT reads files through the model object |
 | Copy a model | `m2 = m.copy()` | `m2 = m.clone()` | |
-| Release resources | `m.dispose()` / `env.dispose()` <br> or `with gp.Env() as env, gp.Model(env=env) as m:` | No explicit release needed; objects are freed automatically by Python's garbage collector | COPT has no `dispose()`, and the documentation defines no `with` usage — simply let objects go out of scope. `env.close()` only disconnects from a floating / cluster license server |
+| Release resources | `m.dispose()` / `env.dispose()` <br> or `with gp.Env() as env, gp.Model(env=env) as m:` | No explicit release needed; objects are freed automatically by Python's garbage collector | COPT has no `dispose()` and the documentation defines no `with` usage; objects are released when they go out of scope. `env.close()` only disconnects from a floating / cluster license server |
 | Synchronize changes | `m.update()` | Not needed while modeling | See note below |
 
-> **Modeling in COPT has no `update()` step.** Gurobi uses lazy updates: adding variables, changing bounds or removing items is queued until `m.update()` (or `optimize()` / `write()`) is called, and the Gurobi documentation warns that a forgotten call does not raise an error — queries simply return the values from the last update. COPT's official examples have no such step: add variables and constraints, set parameters, then solve and query directly. coptpy does provide `Model.update()`; the documentation defines its purpose as "update the model, including numerical ranges, removed variables and constraints", so it is only relevant when you need refreshed coefficient statistics after removing items. During migration you can usually delete every `m.update()` call.
+> **COPT does not need `update()`.** Gurobi uses lazy updates: adding variables, changing bounds and removing items are queued until `m.update()`, `optimize()` or `write()` is called. The Gurobi documentation notes that a forgotten call does not raise an error; queries return the values from the last update. COPT's official examples have no such step: add variables and constraints, set parameters, then solve and query directly. coptpy provides `Model.update()`, defined in the documentation as "update the model, including numerical ranges, removed variables and constraints"; it is only needed to refresh coefficient statistics after removing items. During migration the `m.update()` calls can be deleted.
 
-> **Parameters are set in one place: the model.** Gurobi parameters can live on an `Env` or on a `Model`; a model takes its own copy of the environment when it is created, and later changes to the original environment no longer affect it, so with two layers you have to keep that timing straight. COPT has a single location: all solver parameters are on the `Model`, while `Envr` is only responsible for licensing and resources, so you never have to trace back to an environment configuration when reading code. To share one parameter set across several models, use `m.read("settings.par")` or a small helper function.
+> **Parameters are set on the model only.** Gurobi parameters can be set on an `Env` or on a `Model`; a model copies the environment's parameters when it is created, and later changes to the environment do not affect that model. In COPT all solver parameters are set on the `Model`; `Envr` only manages the license and resources. To share one parameter set across several models, read a parameter file with `m.read("settings.par")` or set the parameters in a helper function.
 
 ### 2.2 Variables
 
@@ -304,7 +304,7 @@ Three general rules explain most of the differences:
 | Change bounds | `x.LB = 0; x.UB = 5` | `x.lb = 0; x.ub = 5` | |
 | Bulk read / write attributes | `m.getAttr("LB", vars)` / `m.setAttr("LB", vars, vals)` | `m.getInfo(COPT.Info.LB, vars)` / `m.setInfo(COPT.Info.LB, vars, vals)` | Gurobi uses attribute-name strings; COPT uses `COPT.Info.*` constants |
 
-**Bounds and infinity**: `GRB.INFINITY` is `1e100`, `COPT.INFINITY` is `1e30`. According to the COPT documentation, a bound is treated as infinite once its absolute value reaches `1e30`, so a leftover `1e100` in old code is still recognized as unbounded. The reverse is not true: a `1e30` read from COPT and fed to Gurobi is a finite (large) number to Gurobi. Use the `COPT.INFINITY` constant everywhere.
+**Bounds and infinity**: `GRB.INFINITY` is `1e100`, `COPT.INFINITY` is `1e30`. According to the COPT documentation, a bound is treated as infinite once its absolute value reaches `1e30`, so a `1e100` left in old code is also recognized as unbounded by COPT. The reverse does not hold: a `1e30` read from COPT is a finite value to Gurobi. Use the `COPT.INFINITY` constant throughout.
 
 **The variable `tupledict`**: `addVars` returns a `tupledict` on both sides, supporting `.sum(...)`, `.prod(coeff_dict)` and the usual dict methods with the same behavior.
 
@@ -330,7 +330,7 @@ Three general rules explain most of the differences:
 | Read coefficient / row / column | `m.getCoeff(c, x)` / `m.getRow(c)` / `m.getCol(x)` | Same names | |
 | Read the coefficient matrix | `m.getA()` | `m.getA()` | Both return a SciPy sparse matrix |
 
-> **COPT constraints are two-sided by design.** A Gurobi linear constraint is described by a `Sense` (`<`/`>`/`=`) and an `RHS`; range constraints need the dedicated `addRange`, which Gurobi implements internally by adding an auxiliary variable. COPT represents every linear constraint uniformly as `lb ≤ expr ≤ ub`, described by `c.lb` and `c.ub`: `x + y <= 10` is stored as `lb = -COPT.INFINITY, ub = 10`; `x + y >= 1` as `lb = 1, ub = +COPT.INFINITY`; `x + y == 3` as `lb = ub = 3`. A range constraint is expressed directly with `addBoundConstr`, with no auxiliary variable, and both sides can be changed independently after solving. The corresponding edits during migration are:
+> **COPT constraints are two-sided.** A Gurobi linear constraint is described by a `Sense` (`<`/`>`/`=`) and an `RHS`; range constraints require `addRange`, which Gurobi implements internally by adding an auxiliary variable. COPT represents every linear constraint as `lb ≤ expr ≤ ub`, described by `c.lb` and `c.ub`: `x + y <= 10` is stored as `lb = -COPT.INFINITY, ub = 10`; `x + y >= 1` as `lb = 1, ub = +COPT.INFINITY`; `x + y == 3` as `lb = ub = 3`. A range constraint is written directly with `addBoundConstr`, without an auxiliary variable; `lb` and `ub` can be changed separately after solving. The corresponding edits during migration:
 >
 > - Code that reads `c.RHS` reads `c.ub` (for ≤) or `c.lb` (for ≥) instead;
 > - Code that changes a right-hand side after solving assigns to `c.lb` / `c.ub`;
@@ -359,7 +359,7 @@ Three general rules explain most of the differences:
 | Read the status | `m.Status` | `m.status` |
 | Is a solution available? | `m.SolCount > 0` | `m.hassol` (the older `hasmipsol` / `haslpsol` are marked deprecated in the 8.0 documentation) |
 
-Status code mapping (use constants on both sides, **never hard-code the numbers**):
+Status code mapping. Use constants on both sides; do not write the numeric values:
 
 | Meaning | Gurobi constant (value) | COPT constant (value) | Notes |
 |---|---|---|---|
@@ -377,7 +377,7 @@ Status code mapping (use constants on both sides, **never hard-code the numbers*
 | Unfinished due to internal error | None | `COPT.UNFINISHED` (9) | |
 | Local optimum / local infeasibility of a nonconvex or nonlinear problem | `GRB.LOCALLY_OPTIMAL` (18) / `GRB.LOCALLY_INFEASIBLE` (19) | `COPT.LOCAL_OPTIMAL` (20) / `COPT.LOCAL_INFEASIBLE` (21) | New in Gurobi 13; Chapter 4 |
 
-A common pattern — "time limit hit, but use the solution if there is one":
+A common pattern: the time limit is reached but a feasible solution exists, so the solution is used:
 
 **Gurobi:**
 
@@ -414,7 +414,7 @@ The COPT column shows the lowercase spelling used in the COPT documentation. **B
 | **Basis status** | **`x.VBasis`** | **`x.basis`** | Different encoding (see 2.8) |
 | **MIP start** | **`x.Start = v`** | **`m.setMipStart(x, v)` + `m.loadMipStart()`** | Chapter 3 |
 | **k-th solution from the pool** | **`m.Params.SolutionNumber = k; x.PoolNX`** | **`m.getPoolSolution(k, vars)`** | `Xn` is deprecated since Gurobi 13 in favor of `PoolNX`; Chapter 4 |
-| Sensitivity analysis | `x.SAObjLow/Up`, `x.SALBLow/Up`, `x.SAUBLow/Up` | `x.saobjlow/up`, `x.salblow/up`, `x.saublow/up` | Computed on demand in COPT: available after setting `ReqSensitivity = 1`, no overhead when not needed |
+| Sensitivity analysis | `x.SAObjLow/Up`, `x.SALBLow/Up`, `x.SAUBLow/Up` | `x.saobjlow/up`, `x.salblow/up`, `x.saublow/up` | Not computed by default in COPT; set `ReqSensitivity = 1` to enable |
 | **Unbounded ray** | **`x.UnbdRay`** | **`x.primalray`** | Must be enabled on both sides: Gurobi `InfUnbdInfo = 1`, COPT `ReqFarkasRay = 1` |
 | **IIS membership** | **`x.IISLB` / `x.IISUB`** | **`x.getLowerIIS()` / `x.getUpperIIS()`** | After `computeIIS()` |
 | Index | `x.index` | `x.index` | |
@@ -472,7 +472,7 @@ The COPT column shows the lowercase spelling used in the COPT documentation. **B
 |---|---|---|
 | `m.Params.TimeLimit = 60` | `m.Param.TimeLimit = 60` | Attribute style (note `Params` in Gurobi vs `Param` in COPT) |
 | `m.setParam(GRB.Param.TimeLimit, 60)` | `m.setParam(COPT.Param.TimeLimit, 60)` | Constant style — the form recommended by both documentations |
-| `m.setParam("TimeLimit", 60)` | `m.setParam("TimeLimit", 60)` | The string form is identical on both sides, convenient for a parameter mapping table (explicitly documented for Gurobi; for COPT the constant `COPT.Param.TimeLimit` evaluates to the string `"TimeLimit"`, as observed) |
+| `m.setParam("TimeLimit", 60)` | `m.setParam("TimeLimit", 60)` | Identical on both sides. Explicitly documented for Gurobi; observed for COPT (the constant `COPT.Param.TimeLimit` evaluates to the string `"TimeLimit"`) |
 | `m.Params.TimeLimit` (read) | `m.Param.TimeLimit` or `m.getParam(COPT.Param.TimeLimit)` | |
 | `m.getParamInfo("TimeLimit")` | `m.getParamInfo(COPT.Param.TimeLimit)` | Same name, different tuple layout: Gurobi returns (name, type, current, min, max, default); COPT returns (name, current, default, min, max) (per the coptpy method docstring) |
 | `m.resetParams()` | `m.resetParam()` | |
@@ -509,10 +509,10 @@ The "Semantics" column states whether the values and their meaning coincide. Par
 | Log file | `LogFile` | No parameter; use `m.setLogFile("x.log")` | |
 | MIP start handling | `StartNodeLimit` | `MipStartMode` / `MipStartNodeLimit` | Chapter 3 |
 | Tuner time limit | `TuneTimeLimit` | `TuneTimeLimit` | Same |
-| Sensitivity analysis | Always available | `ReqSensitivity = 1` | Enabled on demand in COPT, avoiding unnecessary computation |
+| Sensitivity analysis | Always available | `ReqSensitivity = 1` | Off by default in COPT; enable when needed |
 | Farkas certificate / unbounded ray | `InfUnbdInfo = 1` | `ReqFarkasRay = 1` | |
 
-> **Start from COPT's defaults.** COPT's algorithmic parameters (`LpMethod`, `Presolve`, `CutLevel`, `HeurLevel`, `Scaling`, the automatic mode of `Crossover`, …) default to -1, meaning the solver chooses based on the characteristics of the model. A parameter set tuned on Gurobi targets a different algorithmic implementation; carried over verbatim it is usually meaningless for COPT and can even slow the solve down. When migrating, keep only the limits your business requires (time limit, gap, threads) and run a first benchmark with defaults; leave performance parameters to the tuning workflow in Chapter 6, where COPT's built-in tuner (`m.tune()`) can search systematically.
+> **Start from COPT's defaults.** COPT's algorithmic parameters (`LpMethod`, `Presolve`, `CutLevel`, `HeurLevel`, `Scaling`, …) default to -1, meaning the solver chooses based on the characteristics of the model. A parameter set tuned on Gurobi targets Gurobi's algorithmic implementation; copied to COPT it is usually meaningless and can reduce performance. When migrating, keep only the limits the application requires (time limit, gap, threads) and run a first benchmark with defaults. Performance parameters are covered in Chapter 6; COPT's tuner (`m.tune()`) can be used there.
 
 ### 2.8 Constants
 
@@ -529,7 +529,7 @@ The "Semantics" column states whether the values and their meaning coincide. Par
 
 ### 2.9 File I/O
 
-`m.write(filename)` picks the format from the extension on both sides. Reading differs slightly: Gurobi reads model files with the module-level `gp.read()`, while `m.read()` only reads auxiliary files (basis, MIP start, parameters, …); COPT uses `m.read()` for everything, model and auxiliary files alike, recognized by extension.
+`m.write(filename)` picks the format from the extension on both sides. Reading differs: Gurobi reads model files with the module-level `gp.read()`, while `m.read()` only reads auxiliary files (basis, MIP start, parameters, …); COPT uses `m.read()` for everything, model and auxiliary files alike, recognized by extension.
 
 | Content | Gurobi extension | COPT extension | Notes |
 |---|---|---|---|
@@ -549,7 +549,7 @@ Besides extension-based `write`/`read`, COPT also offers explicit-format methods
 
 ### 2.10 Not covered in this chapter
 
-The following features exist on both sides but differ enough in design that a one-line mapping would mislead. They get their own treatment in later chapters:
+The following features exist on both sides but differ substantially in interface design. They are covered in later chapters:
 
 - **MIP starts**: `x.Start` → `setMipStart` + `loadMipStart` (Chapter 3)
 - **Callbacks**: Gurobi's function-style `optimize(callback)` → subclassing COPT's `CallbackBase` (Chapter 3)
