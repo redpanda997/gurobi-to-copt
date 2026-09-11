@@ -8,7 +8,7 @@
 
 ## Outline
 
-This guide has seven chapters. Chapters 1 and 2 are published now; the rest will follow.
+This guide has seven chapters. Chapters 1 and 2 are published now; the rest will follow. The basic replacement rules follow the comparison table [COPTPY-GUROBIPY](https://github.com/leavesgrp/COPTPY-GUROBIPY) maintained by the COPT team, extended here with item-by-item mappings for parameters, status codes, attributes and file formats.
 
 | Chapter | Contents | Status |
 |---|---|---|
@@ -249,23 +249,29 @@ Besides the five changes from 1.3, this example has three more differences, whic
 
 ### 1.5 Chapter checklist
 
-To migrate a gurobipy script, apply the following seven replacements first. Most small and medium scripts run after this:
+To migrate a gurobipy script, apply the following seven basic replacements first. Except for item 3, they are the core rules listed in the [COPTPY-GUROBIPY](https://github.com/leavesgrp/COPTPY-GUROBIPY) comparison table maintained by the COPT team:
 
-1. `import gurobipy as gp` → `import coptpy as cp`; `GRB` → `COPT`
-2. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
-3. `m.optimize()` → `m.solve()`
-4. Replace every hard-coded status number (e.g. `== 2`) with a constant such as `COPT.OPTIMAL`
-5. `m.Params.X = v` → `m.Param.X = v` (singular `Param` instead of `Params`) or `m.setParam(COPT.Param.X, v)`, and check the parameter name (2.7)
-6. `name=` → `nameprefix=` in `addVars` / `addConstrs`
-7. Renamed attributes: `VarName`/`ConstrName` → `name`, `X` → `x`, `Pi` → `pi`, `RC` → `rc`, `NumVars`/`NumConstrs` → `cols`/`rows`, `Runtime` → `solvingtime`, `MIPGap` → `bestgap` (full list in 2.6)
+1. `import gurobipy as gp` → `import coptpy as cp`
+2. `GRB` → `COPT`
+3. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
+4. `name=` → `nameprefix=` in `addVars` / `addConstrs`
+5. `m.optimize()` → `m.solve()`
+6. `m.getAttr("X", vars)` → `m.getInfo(COPT.Info.Value, vars)`
+7. `VarName`/`ConstrName` → `name`
 
-If the code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the model after solving, continue with Chapters 2 and 3.
+Then check three more points:
+
+8. Replace every hard-coded status number (e.g. `== 2`) with a constant such as `COPT.OPTIMAL`
+9. `m.Params.X = v` → `m.Param.X = v` (singular `Param` instead of `Params`) or `m.setParam(COPT.Param.X, v)`, and check the parameter name (2.7)
+10. Other renamed attributes: `X` → `x`, `Pi` → `pi`, `RC` → `rc`, `NumVars`/`NumConstrs` → `cols`/`rows`, `Runtime` → `solvingtime`, `MIPGap` → `bestgap` (full list in 2.6)
+
+Most small and medium scripts run after these ten items. If the code uses callbacks, MIP starts (`x.Start`), `addRange`, hand-built `LinExpr` objects, or modifies the model after solving, continue with Chapters 2 and 3.
 
 ---
 
 ## Chapter 2 — Core mapping tables
 
-This chapter follows the modeling workflow: environment & model → variables → constraints → objective → solving & status → reading results → parameters → constants → file I/O. Each table stands on its own as a quick reference.
+This chapter follows the modeling workflow: environment & model → variables → constraints → objective & expressions → solving & status → reading results → parameters → constants → file I/O. Each section first shows the difference in a short piece of code, then gives the full mapping table; the tables stand on their own as a quick reference. The code snippets continue the conventions of Chapter 1: `gp`, `GRB`, `cp` and `COPT` are imported, `m` is the model, `x`, `y`, `z` are variables and `c` is a constraint.
 
 The following three rules summarize the main differences between the two APIs:
 
@@ -274,6 +280,31 @@ The following three rules summarize the main differences between the two APIs:
 3. **Status codes have different numeric values.** `GRB.OPTIMAL == 2` whereas `COPT.OPTIMAL == 1`. Code that compares against literal numbers instead of constants fails after migration.
 
 ### 2.1 Environment and model lifecycle
+
+A Gurobi model can be created directly; the environment object is optional. A COPT model is always created from an environment object:
+
+**Gurobi:**
+
+```python
+env = gp.Env()                     # optional; Model() creates a default environment
+m = gp.Model("demo", env=env)
+```
+
+**COPT:**
+
+```python
+env = cp.Envr()
+m = env.createModel("demo")
+```
+
+With a floating or cluster license, COPT specifies the license server through `EnvrConfig` before the environment is created:
+
+```python
+cfg = cp.EnvrConfig()
+cfg.set(COPT.CLIENT_CLUSTER, "192.168.9.9")   # COPT.CLIENT_FLOATING for a floating license
+env = cp.Envr(cfg)
+m = env.createModel("demo")
+```
 
 | Operation | Gurobi | COPT | Notes |
 |---|---|---|---|
@@ -290,6 +321,24 @@ The following three rules summarize the main differences between the two APIs:
 > **Parameters are set on the model only.** Gurobi parameters can be set on an `Env` or on a `Model`; a model copies the environment's parameters when it is created, and later changes to the environment do not affect that model. In COPT all solver parameters are set on the `Model`; `Envr` only manages the license and resources. To share one parameter set across several models, read a parameter file with `m.read("settings.par")` or set the parameters in a helper function.
 
 ### 2.2 Variables
+
+Single variables are created the same way on both sides. For bulk creation, Gurobi's `name` argument is called `nameprefix` in COPT; for bulk attribute reads, Gurobi's `getAttr` corresponds to COPT's `getInfo`. Both accept a list or a `tupledict` and return a container of the same type:
+
+**Gurobi:**
+
+```python
+x = m.addVars(3, 2, vtype=GRB.BINARY, name="x")
+m.optimize()
+vals = m.getAttr("X", x)                 # tupledict with the same keys as x
+```
+
+**COPT:**
+
+```python
+x = m.addVars(3, 2, vtype=COPT.BINARY, nameprefix="x")
+m.solve()
+vals = m.getInfo(COPT.Info.Value, x)     # tupledict with the same keys as x
+```
 
 | Operation | Gurobi | COPT | Notes |
 |---|---|---|---|
@@ -309,6 +358,43 @@ The following three rules summarize the main differences between the two APIs:
 **The variable `tupledict`**: `addVars` returns a `tupledict` on both sides, supporting `.sum(...)`, `.prod(coeff_dict)` and the usual dict methods with the same behavior.
 
 ### 2.3 Constraints
+
+Constraints written with comparison operators, and bulk creation with `addConstrs` and a generator, are the same on both sides. The differences are in the internal representation of range constraints and in the attributes used to read the right-hand side.
+
+A range constraint `lb ≤ expr ≤ ub` can be written as `expr == [lb, ub]` on both sides, and both have a dedicated method:
+
+**Gurobi:**
+
+```python
+m.addRange(x + y, 1, 5, name="r1")
+m.addConstr(x + y == [1, 5], name="r2")   # equivalent to the line above
+```
+
+**COPT:**
+
+```python
+m.addBoundConstr(x + y, 1, 5, name="r1")
+m.addConstr(x + y == [1, 5], name="r2")   # equivalent to the line above
+```
+
+Gurobi stores a range constraint as an equality with an auxiliary variable, so the variable count of the model increases by one; COPT stores it directly as `lb ≤ expr ≤ ub` without adding a variable.
+
+To read the right-hand side of a constraint, Gurobi uses `Sense` and `RHS`, COPT uses `lb` and `ub`:
+
+**Gurobi:**
+
+```python
+c = m.addConstr(x + y <= 10, name="c")
+m.update()
+print(c.Sense, c.RHS)                     # < 10.0
+```
+
+**COPT:**
+
+```python
+c = m.addConstr(x + y <= 10, name="c")
+print(c.lb, c.ub)                         # -1e+30 10.0
+```
 
 | Operation | Gurobi | COPT | Notes |
 |---|---|---|---|
@@ -336,7 +422,27 @@ The following three rules summarize the main differences between the two APIs:
 > - Code that changes a right-hand side after solving assigns to `c.lb` / `c.ub`;
 > - `addRange` becomes `addBoundConstr`.
 
-### 2.4 Objective
+### 2.4 Objective and expressions
+
+`setObjective` is used the same way, and expressions built with operators and `quicksum` need no changes. When terms are added to a `LinExpr` by method calls, the argument order differs: Gurobi's `addTerms` takes the coefficient first, then the variable; COPT's `addTerm`/`addTerms` take the variable first, then the coefficient:
+
+**Gurobi:**
+
+```python
+expr = gp.LinExpr(1.0)                    # constant term 1.0
+expr.addTerms(2.0, x)                     # coefficient first, variable second
+expr.addTerms([3.0, 4.0], [y, z])
+m.setObjective(expr, GRB.MINIMIZE)
+```
+
+**COPT:**
+
+```python
+expr = cp.LinExpr(1.0)
+expr.addTerm(x, 2.0)                      # variable first, coefficient second
+expr.addTerms([y, z], [3.0, 4.0])
+m.setObjective(expr, COPT.MINIMIZE)
+```
 
 | Operation | Gurobi | COPT | Notes |
 |---|---|---|---|
@@ -347,8 +453,12 @@ The following three rules summarize the main differences between the two APIs:
 | Objective coefficient of a variable | `x.Obj` | `x.obj` | |
 | Multiple objectives | `m.setObjectiveN(expr, index, priority, weight, ...)` | `m.setObjectiveN(index, expr, sense, priority, weight, ...)` | **Different argument order**, Chapter 4 |
 | Matrix-form objective | `m.setMObjective(...)` | `m.setMObjective(...)` | Chapter 4 |
+| Add terms to a linear expression | `expr.addTerms(coeffs, vars)` | `expr.addTerm(var, coeff)` / `expr.addTerms(vars, coeffs)` | **Reversed argument order**, see above |
+| Constant term of an expression | `gp.LinExpr(1.0)` / `expr.getConstant()` | `cp.LinExpr(1.0)` / `expr.getConstant()` | Identical |
 
 ### 2.5 Solving and status codes
+
+The solve method has a different name (`optimize()` vs `solve()`), the status constants share names but not values, and the attribute that tells whether a usable solution exists differs:
 
 | Operation | Gurobi | COPT |
 |---|---|---|
@@ -398,6 +508,40 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 ```
 
 ### 2.6 Reading results: attribute mapping
+
+Results of a single variable or constraint are read as attributes; bulk reads go through model methods. Gurobi's `getAttr` corresponds to COPT's `getInfo`, and COPT also has argument-free shortcuts such as `getValues` and `getDuals`:
+
+**Gurobi:**
+
+```python
+print(x.X, c.Pi, m.ObjVal)
+vals = m.getAttr("X", m.getVars())
+duals = m.getAttr("Pi", m.getConstrs())
+```
+
+**COPT:**
+
+```python
+print(x.x, c.pi, m.objval)
+vals = m.getValues()        # or m.getInfo(COPT.Info.Value, m.getVars())
+duals = m.getDuals()        # or m.getInfo(COPT.Info.Dual, m.getConstrs())
+```
+
+MIP starts are given differently. Gurobi assigns the `Start` attribute of each variable; COPT sets them with `setMipStart` and loads them once with `loadMipStart`:
+
+**Gurobi:**
+
+```python
+x.Start = 1.0
+y.Start = 0.0
+```
+
+**COPT:**
+
+```python
+m.setMipStart([x, y], [1.0, 0.0])
+m.loadMipStart()
+```
 
 The COPT column shows the lowercase spelling used in the COPT documentation. **Bold** rows are attributes whose names actually differ and must be edited; the other rows share the same name on both sides and, per the COPT documentation, can be accessed in original case or lowercase — so the Gurobi spelling can stay.
 
@@ -466,11 +610,29 @@ The COPT column shows the lowercase spelling used in the COPT documentation. **B
 
 ### 2.7 Parameters
 
+Most parameter names are the same. Both sides support attribute style, constant style and string style:
+
+**Gurobi:**
+
+```python
+m.Params.TimeLimit = 60
+m.setParam(GRB.Param.MIPGap, 1e-3)
+m.setParam("Threads", 4)
+```
+
+**COPT:**
+
+```python
+m.Param.TimeLimit = 60                # m.param.timelimit = 60 also works
+m.setParam(COPT.Param.RelGap, 1e-3)   # MIPGap is called RelGap in COPT
+m.setParam("Threads", 4)
+```
+
 **How to set them**
 
 | Gurobi | COPT | Notes |
 |---|---|---|
-| `m.Params.TimeLimit = 60` | `m.Param.TimeLimit = 60` | Attribute style (note `Params` in Gurobi vs `Param` in COPT) |
+| `m.Params.TimeLimit = 60` | `m.Param.TimeLimit = 60` | Attribute style (`Params` in Gurobi, `Param` in COPT; the COPT team's comparison table writes `m.param.timelimit`, which also works) |
 | `m.setParam(GRB.Param.TimeLimit, 60)` | `m.setParam(COPT.Param.TimeLimit, 60)` | Constant style — the form recommended by both documentations |
 | `m.setParam("TimeLimit", 60)` | `m.setParam("TimeLimit", 60)` | Identical on both sides. Explicitly documented for Gurobi; observed for COPT (the constant `COPT.Param.TimeLimit` evaluates to the string `"TimeLimit"`) |
 | `m.Params.TimeLimit` (read) | `m.Param.TimeLimit` or `m.getParam(COPT.Param.TimeLimit)` | |
@@ -515,6 +677,8 @@ The "Semantics" column states whether the values and their meaning coincide. Par
 > **Start from COPT's defaults.** COPT's algorithmic parameters (`LpMethod`, `Presolve`, `CutLevel`, `HeurLevel`, `Scaling`, …) default to -1, meaning the solver chooses based on the characteristics of the model. A parameter set tuned on Gurobi targets Gurobi's algorithmic implementation; copied to COPT it is usually meaningless and can reduce performance. When migrating, keep only the limits the application requires (time limit, gap, threads) and run a first benchmark with defaults. Performance parameters are covered in Chapter 6; COPT's tuner (`m.tune()`) can be used there.
 
 ### 2.8 Constants
+
+Constant names are largely the same; the value of `INFINITY` and the encoding of basis statuses differ:
 
 | Meaning | Gurobi | COPT | Notes |
 |---|---|---|---|
