@@ -6,7 +6,7 @@
 
 !!! info "Audience"
 
-    Developers who model with gurobipy and want to move existing code to COPT. If you work through a modeling framework rather than calling the solver API directly, skip ahead to Chapter 5 — you usually only need to change the solver name.
+    Developers who model with gurobipy and want to move existing code to COPT. If you work through a modeling framework rather than calling the solver API directly, see Chapter 5; usually only the solver name needs to change.
 
 ## Outline
 
