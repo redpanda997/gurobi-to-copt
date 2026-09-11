@@ -122,7 +122,7 @@ B = 15
 | 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | 状态常量名相同，但**数值不同**（2 与 1），应使用常量，不要写数字 |
 | 5 | `v.VarName` / `v.X` | `v.name` / `v.x` | 变量名属性叫 `name`，解值叫 `x`；`m.ObjVal`、`m.Status` 在 COPT 里可以原样使用，见下文 |
 
-第 5 点需要补充说明。COPT 文档规定，模型属性和变量 / 约束信息既可以按**原始大小写**访问（`m.ObjVal`、`m.Status`、`x.LB`、`x.UB`、`x.Obj`、`c.Slack`），也可以按**全小写**访问（`m.objval`、`x.lb`）。因此两边名称相同的属性，Gurobi 写法可以保留；需要修改的是名称本身不同的属性，如 `VarName` → `name`、`X` → `x`、`RC` → `rc`、`Pi` → `pi`、`NumVars` → `cols`、`Runtime` → `solvingtime`，完整对照见第 2 章。实测中 coptpy 对属性名的匹配不区分大小写，`x.X`、`c.Pi` 也能运行，但文档未作此保证，本文不依赖这一行为。本文的 COPT 代码统一使用文档中的小写写法。
+第 5 点需要补充说明。COPT 文档规定，模型属性和变量 / 约束信息既可以按**原始大小写**访问（`m.ObjVal`、`m.Status`、`x.LB`、`x.UB`、`x.Obj`、`c.Slack`），也可以按**全小写**访问（`m.objval`、`x.lb`）。因此两边名称相同的属性，Gurobi 写法可以保留；需要修改的是名称本身不同的属性，如 `VarName` → `name`、`X` → `x`、`RC` → `rc`、`Pi` → `pi`、`NumVars` → `cols`、`Runtime` → `solvingtime`，完整对照见第 2 章。实测中 coptpy 对属性名的匹配不区分大小写，`x.X`、`c.Pi` 也能运行，但文档未作此保证，本文不依赖这一行为。本文的 COPT 代码统一使用文档中的小写写法；第 2 章的对照表则按文档中的原始大小写列出属性名，两边同名的行一眼可见，加粗的行才是名字真正不同、需要修改的。
 
 ## 1.4 一个更典型的例子：tupledict、quicksum 与影子价格
 
