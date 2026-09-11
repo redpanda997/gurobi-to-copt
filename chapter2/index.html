@@ -1,0 +1,2053 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Gurobi 用户迁移到 COPT 求解器的实用指南（Python）">
+      
+      
+      
+        <link rel="canonical" href="https://redpanda997.github.io/gurobi-to-copt/chapter2/">
+      
+      
+        <link rel="prev" href="../chapter1/">
+      
+      
+      
+        
+          <link rel="alternate" href="./" hreflang="zh">
+        
+          <link rel="alternate" href="../en/chapter2/" hreflang="en">
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>第 2 章 核心对照表 - 从 Gurobi 迁移到 COPT</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#2" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="从 Gurobi 迁移到 COPT" class="md-header__button md-logo" aria-label="从 Gurobi 迁移到 COPT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            从 Gurobi 迁移到 COPT
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第 2 章 核心对照表
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="选择当前语言">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="zh" class="md-select__link">
+              中文
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="../en/chapter2/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/redpanda997/gurobi-to-copt" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    redpanda997/gurobi-to-copt
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="从 Gurobi 迁移到 COPT" class="md-nav__button md-logo" aria-label="从 Gurobi 迁移到 COPT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    从 Gurobi 迁移到 COPT
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/redpanda997/gurobi-to-copt" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    redpanda997/gurobi-to-copt
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第 1 章 十分钟快速上手
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第 2 章 核心对照表
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第 2 章 核心对照表
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 环境与模型生命周期
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 变量
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 约束
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 目标函数与表达式
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 求解与状态码
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 结果读取：属性对照
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 参数
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 常量
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.9 文件读写
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.10 本章未覆盖的内容
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 环境与模型生命周期
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 变量
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 约束
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 目标函数与表达式
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 求解与状态码
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 结果读取：属性对照
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 参数
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 常量
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.9 文件读写
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.10 本章未覆盖的内容
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/redpanda997/gurobi-to-copt/edit/main/docs/zh/chapter2.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="2">第 2 章 核心对照表<a class="headerlink" href="#2" title="Permanent link">&para;</a></h1>
+<p>本章按建模流程的顺序展开：环境与模型 → 变量 → 约束 → 目标与表达式 → 求解与状态 → 结果读取 → 参数 → 常量 → 文件读写。每节先用一两段代码说明该环节的差别在哪里，再给出完整的对照表；表格可以单独作为速查表使用。本章的代码片段承接第 1 章的写法：<code>gp</code>、<code>GRB</code>、<code>cp</code>、<code>COPT</code> 已导入，<code>m</code> 是模型，<code>x</code>、<code>y</code>、<code>z</code> 是变量，<code>c</code> 是约束。</p>
+<p>以下三条规则概括了两套 API 的主要差异：</p>
+<ol>
+<li><strong>方法名基本相同。</strong> <code>addVar</code>、<code>addVars</code>、<code>addConstr</code>、<code>addConstrs</code>、<code>setObjective</code>、<code>getVars</code>、<code>getConstrs</code>、<code>computeIIS</code>、<code>write</code>、<code>read</code>、<code>remove</code>、<code>reset</code>、<code>tune</code> 等在两边同名同义。主要例外是 <code>optimize()</code> → <code>solve()</code>。</li>
+<li><strong>属性可以用原始大小写或全小写访问，但部分属性名不同。</strong> COPT 文档规定属性名可写成原始大小写（<code>m.ObjVal</code>）或全小写（<code>m.objval</code>），因此与 Gurobi 同名的属性可以保留。需要修改的是名称不同的属性，见 2.6 节。</li>
+<li><strong>状态码数值不同。</strong> <code>GRB.OPTIMAL == 2</code> 而 <code>COPT.OPTIMAL == 1</code>。代码中直接写数字而不是常量的判断，迁移后会失效。</li>
+</ol>
+<h2 id="21">2.1 环境与模型生命周期<a class="headerlink" href="#21" title="Permanent link">&para;</a></h2>
+<p>Gurobi 的模型可以直接创建，环境对象是可选的；COPT 的模型必须由环境对象创建：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">env</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">Env</span><span class="p">()</span>                     <span class="c1"># 可省略，Model() 会隐式创建默认环境</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="s2">"demo"</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">env</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Envr</span><span class="p">()</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">createModel</span><span class="p">(</span><span class="s2">"demo"</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>使用浮动或集群许可时，COPT 在创建环境前用 <code>EnvrConfig</code> 指定许可服务器：</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">cfg</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">EnvrConfig</span><span class="p">()</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">CLIENT_CLUSTER</span><span class="p">,</span> <span class="s2">"192.168.9.9"</span><span class="p">)</span>   <span class="c1"># 浮动许可改用 COPT.CLIENT_FLOATING</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">env</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Envr</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">createModel</span><span class="p">(</span><span class="s2">"demo"</span><span class="p">)</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>导入</td>
+<td><code>import gurobipy as gp</code> <br> <code>from gurobipy import GRB</code></td>
+<td><code>import coptpy as cp</code> <br> <code>from coptpy import COPT</code></td>
+<td></td>
+</tr>
+<tr>
+<td>创建环境</td>
+<td><code>env = gp.Env()</code>（可省略，<code>Model()</code> 会隐式创建默认环境）</td>
+<td><code>env = cp.Envr()</code></td>
+<td>COPT 需要显式创建环境，模型通过环境创建</td>
+</tr>
+<tr>
+<td>创建模型</td>
+<td><code>m = gp.Model("name", env=env)</code></td>
+<td><code>m = env.createModel("name")</code></td>
+<td>模型由环境创建</td>
+</tr>
+<tr>
+<td>从文件创建模型</td>
+<td><code>m = gp.read("model.mps")</code></td>
+<td><code>m = env.createModel()</code> <br> <code>m.read("model.mps")</code></td>
+<td>COPT 通过模型对象读取文件</td>
+</tr>
+<tr>
+<td>复制模型</td>
+<td><code>m2 = m.copy()</code></td>
+<td><code>m2 = m.clone()</code></td>
+<td></td>
+</tr>
+<tr>
+<td>释放资源</td>
+<td><code>m.dispose()</code> / <code>env.dispose()</code> <br> 或 <code>with gp.Env() as env, gp.Model(env=env) as m:</code></td>
+<td>不需要显式释放，对象随 Python 垃圾回收自动销毁</td>
+<td>COPT 没有 <code>dispose()</code>，文档也未定义 <code>with</code> 用法，对象随作用域结束自动回收。<code>env.close()</code> 只用于断开浮动 / 集群许可服务器的连接</td>
+</tr>
+<tr>
+<td>同步修改</td>
+<td><code>m.update()</code></td>
+<td>建模过程中不需要</td>
+<td>见下方说明</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">COPT 不需要 <code>update()</code></p>
+<p>Gurobi 采用惰性更新：添加变量、修改边界、删除元素等操作会先排队，在调用 <code>m.update()</code>、<code>optimize()</code> 或 <code>write()</code> 时才生效。Gurobi 文档指出，忘记调用 <code>update()</code> 不会报错，查询返回的是上一次更新时的值。COPT 的官方示例中没有这一步骤：添加变量和约束、设置参数后可以直接求解和查询。coptpy 提供的 <code>Model.update()</code> 按文档定义用于"更新模型的数值范围以及已删除的变量和约束"，只在删除元素后需要读取系数范围等统计量时才需要调用。迁移时可以删除代码中的 <code>m.update()</code> 调用。</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">参数只在模型层设置</p>
+<p>Gurobi 的参数可以设在 <code>Env</code> 上，也可以设在 <code>Model</code> 上；模型在创建时复制当前环境的参数，之后对环境的修改不再影响该模型。COPT 的求解参数全部设在 <code>Model</code> 上，<code>Envr</code> 只管理许可证和资源。多个模型共用一套参数时，可以用 <code>m.read("settings.par")</code> 读入参数文件，或用一个函数统一设置。</p>
+</div>
+<h2 id="22">2.2 变量<a class="headerlink" href="#22" title="Permanent link">&para;</a></h2>
+<p>单个变量的创建方式两边相同。批量创建时，Gurobi 的 <code>name</code> 参数在 COPT 中叫 <code>nameprefix</code>；批量读取属性时，Gurobi 的 <code>getAttr</code> 对应 COPT 的 <code>getInfo</code>。两者都接受 list 或 <code>tupledict</code>，并返回同类型的容器：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">vtype</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">"X"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                 <span class="c1"># tupledict，键与 x 相同</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">vtype</span><span class="o">=</span><span class="n">COPT</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">nameprefix</span><span class="o">=</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">m</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getInfo</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Info</span><span class="o">.</span><span class="n">Value</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>     <span class="c1"># tupledict，键与 x 相同</span>
+</span></code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单个变量</td>
+<td><code>m.addVar(lb=0, ub=GRB.INFINITY, obj=0, vtype=GRB.CONTINUOUS, name="x")</code></td>
+<td><code>m.addVar(lb=0, ub=COPT.INFINITY, obj=0, vtype=COPT.CONTINUOUS, name="x")</code></td>
+<td>签名一致</td>
+</tr>
+<tr>
+<td>批量变量</td>
+<td><code>m.addVars(I, J, vtype=GRB.BINARY, name="x")</code></td>
+<td><code>m.addVars(I, J, vtype=COPT.BINARY, nameprefix="x")</code></td>
+<td><code>name</code> → <code>nameprefix</code>；名字格式 <code>x[i,j]</code> → <code>x(i,j)</code></td>
+</tr>
+<tr>
+<td>矩阵变量</td>
+<td><code>m.addMVar(shape, lb=..., ub=..., name=...)</code></td>
+<td><code>m.addMVar(shape, lb=..., ub=..., nameprefix=...)</code></td>
+<td>第 4 章</td>
+</tr>
+<tr>
+<td>按名字查找</td>
+<td><code>m.getVarByName("x")</code></td>
+<td><code>m.getVarByName("x")</code></td>
+<td></td>
+</tr>
+<tr>
+<td>所有变量</td>
+<td><code>m.getVars()</code>（返回 list）</td>
+<td><code>m.getVars()</code>（返回 <code>VarArray</code>，可直接 for 迭代；<code>.getAll()</code> 转为 list，<code>.getSize()</code> 取个数）</td>
+<td></td>
+</tr>
+<tr>
+<td>变量个数</td>
+<td><code>m.NumVars</code></td>
+<td><code>m.cols</code></td>
+<td></td>
+</tr>
+<tr>
+<td>删除变量</td>
+<td><code>m.remove(x)</code></td>
+<td><code>m.remove(x)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>修改类型</td>
+<td><code>x.VType = GRB.INTEGER</code></td>
+<td><code>x.vtype = COPT.INTEGER</code> 或 <code>m.setVarType(x, COPT.INTEGER)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>修改边界</td>
+<td><code>x.LB = 0; x.UB = 5</code></td>
+<td><code>x.LB = 0; x.UB = 5</code></td>
+<td>同名</td>
+</tr>
+<tr>
+<td>批量读 / 写属性</td>
+<td><code>m.getAttr("LB", vars)</code> / <code>m.setAttr("LB", vars, vals)</code></td>
+<td><code>m.getInfo(COPT.Info.LB, vars)</code> / <code>m.setInfo(COPT.Info.LB, vars, vals)</code></td>
+<td>Gurobi 用字符串属性名，COPT 用 <code>COPT.Info.*</code> 常量</td>
+</tr>
+</tbody>
+</table>
+<p><strong>边界与无穷大</strong>：<code>GRB.INFINITY</code> 是 <code>1e100</code>，<code>COPT.INFINITY</code> 是 <code>1e30</code>。按 COPT 文档，绝对值达到 <code>1e30</code> 的边界即被视为无穷，因此旧代码中的 <code>1e100</code> 在 COPT 中同样被识别为无界。反向则不成立：从 COPT 读出的 <code>1e30</code> 传给 Gurobi 时会被当作有限值。建议统一使用 <code>COPT.INFINITY</code> 常量。</p>
+<p><strong>变量的 <code>tupledict</code></strong>：<code>addVars</code> 返回的对象在两边都是 <code>tupledict</code>，支持 <code>.sum(...)</code>、<code>.prod(coeff_dict)</code> 以及普通 dict 的方法，用法相同。</p>
+<h2 id="23">2.3 约束<a class="headerlink" href="#23" title="Permanent link">&para;</a></h2>
+<p>用比较运算符写约束的方式两边相同，<code>addConstrs</code> 加生成器的批量写法也相同。差别在两处：区间约束的内部表示，以及读取右端项的属性。</p>
+<p>区间约束 <code>lb ≤ expr ≤ ub</code> 两边都可以写成 <code>expr == [lb, ub]</code>，也都有专用方法：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">m</span><span class="o">.</span><span class="n">addRange</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r1"</span><span class="p">)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r2"</span><span class="p">)</span>   <span class="c1"># 与上一行等价</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">addBoundConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r1"</span><span class="p">)</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r2"</span><span class="p">)</span>   <span class="c1"># 与上一行等价</span>
+</span></code></pre></div>
+</div>
+<p>Gurobi 把区间约束存成等式约束并增加一个辅助变量，模型的变量数因此加一；COPT 直接存为 <code>lb ≤ expr ≤ ub</code>，不增加变量。</p>
+<p>读取约束的右端项时，Gurobi 用 <code>Sense</code> 和 <code>RHS</code>，COPT 用 <code>lb</code> 和 <code>ub</code>：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"c"</span><span class="p">)</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">m</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">Sense</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">RHS</span><span class="p">)</span>                     <span class="c1"># &lt; 10.0</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"c"</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">lb</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">ub</span><span class="p">)</span>                         <span class="c1"># -1e+30 10.0</span>
+</span></code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>线性约束（表达式写法）</td>
+<td><code>m.addConstr(x + y &lt;= 10, name="c")</code></td>
+<td><code>m.addConstr(x + y &lt;= 10, name="c")</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>线性约束（显式写法）</td>
+<td><code>m.addLConstr(x + y, GRB.LESS_EQUAL, 10, name="c")</code></td>
+<td><code>m.addConstr(x + y, COPT.LESS_EQUAL, 10, name="c")</code></td>
+<td>COPT 的 <code>addConstr</code> 同时接受两种写法</td>
+</tr>
+<tr>
+<td>批量约束</td>
+<td><code>m.addConstrs((expr_i &lt;= b_i for i in I), name="c")</code></td>
+<td><code>m.addConstrs((expr_i &lt;= b_i for i in I), nameprefix="c")</code></td>
+<td><code>name</code> → <code>nameprefix</code></td>
+</tr>
+<tr>
+<td>区间约束</td>
+<td><code>m.addRange(expr, lb, ub, name="r")</code></td>
+<td><code>m.addBoundConstr(expr, lb, ub, name="r")</code></td>
+<td>见下方"两侧界"说明</td>
+</tr>
+<tr>
+<td>二次约束</td>
+<td><code>m.addQConstr(...)</code></td>
+<td><code>m.addQConstr(...)</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>SOS 约束</td>
+<td><code>m.addSOS(GRB.SOS_TYPE1, vars, weights)</code></td>
+<td><code>m.addSOS(COPT.SOS_TYPE1, vars, weights)</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>指示约束</td>
+<td><code>m.addGenConstrIndicator(z, True, x + y &lt;= 5)</code></td>
+<td><code>m.addGenConstrIndicator(z, True, x + y &lt;= 5)</code></td>
+<td>一致（COPT 多一个可选参数 <code>type</code>，默认为 if-then）</td>
+</tr>
+<tr>
+<td>其它通用约束</td>
+<td><code>addGenConstrAbs / Max / Min / And / Or / PWL</code></td>
+<td>同名</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>非线性约束</td>
+<td><code>m.addGenConstrNL(...)</code> 及 <code>nlfunc</code></td>
+<td><code>m.addNlConstr(...)</code> 及 <code>cp.nl</code></td>
+<td>第 4 章</td>
+</tr>
+<tr>
+<td>矩阵约束</td>
+<td><code>m.addMConstr(A, x, sense, b)</code></td>
+<td><code>m.addMConstr(A, x, sense, b)</code></td>
+<td>第 4 章</td>
+</tr>
+<tr>
+<td>按名字查找</td>
+<td><code>m.getConstrByName("c")</code></td>
+<td><code>m.getConstrByName("c")</code></td>
+<td></td>
+</tr>
+<tr>
+<td>所有约束</td>
+<td><code>m.getConstrs()</code></td>
+<td><code>m.getConstrs()</code>（返回 <code>ConstrArray</code>）</td>
+<td></td>
+</tr>
+<tr>
+<td>约束个数</td>
+<td><code>m.NumConstrs</code></td>
+<td><code>m.rows</code></td>
+<td></td>
+</tr>
+<tr>
+<td>删除约束</td>
+<td><code>m.remove(c)</code></td>
+<td><code>m.remove(c)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>修改系数</td>
+<td><code>m.chgCoeff(c, x, 2.0)</code></td>
+<td><code>m.setCoeff(c, x, 2.0)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>读取系数 / 行 / 列</td>
+<td><code>m.getCoeff(c, x)</code> / <code>m.getRow(c)</code> / <code>m.getCol(x)</code></td>
+<td>同名</td>
+<td></td>
+</tr>
+<tr>
+<td>读取系数矩阵</td>
+<td><code>m.getA()</code></td>
+<td><code>m.getA()</code></td>
+<td>均返回 SciPy 稀疏矩阵</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">COPT 的约束统一为两侧界形式</p>
+<p>Gurobi 的线性约束由 <code>Sense</code>（<code>&lt;</code>/<code>&gt;</code>/<code>=</code>）和 <code>RHS</code> 描述，区间约束需要用 <code>addRange</code>，Gurobi 内部通过引入辅助变量实现。COPT 把每条线性约束统一表示为 <code>lb ≤ expr ≤ ub</code>，用 <code>c.lb</code> 和 <code>c.ub</code> 描述：<code>x + y &lt;= 10</code> 存储为 <code>lb = -COPT.INFINITY, ub = 10</code>；<code>x + y &gt;= 1</code> 为 <code>lb = 1, ub = +COPT.INFINITY</code>；<code>x + y == 3</code> 为 <code>lb = ub = 3</code>。区间约束用 <code>addBoundConstr</code> 直接表示，不引入辅助变量；求解后可以分别修改 <code>lb</code> 和 <code>ub</code>。迁移时的对应修改：</p>
+<ul>
+<li>读 <code>c.RHS</code> 的代码改成读 <code>c.ub</code>（≤ 约束）或 <code>c.lb</code>（≥ 约束）；</li>
+<li>求解后"改右端项"的代码改成给 <code>c.lb</code> / <code>c.ub</code> 赋值；</li>
+<li><code>addRange</code> 改为 <code>addBoundConstr</code>。</li>
+</ul>
+</div>
+<h2 id="24">2.4 目标函数与表达式<a class="headerlink" href="#24" title="Permanent link">&para;</a></h2>
+<p><code>setObjective</code> 的用法相同，用运算符和 <code>quicksum</code> 构造的表达式也不需要改动。手工调用 <code>LinExpr</code> 的方法逐项添加时要注意参数顺序：Gurobi 的 <code>addTerms</code> 先写系数再写变量，COPT 的 <code>addTerm</code>/<code>addTerms</code> 先写变量再写系数：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">LinExpr</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>                    <span class="c1"># 常数项 1.0</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerms</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                     <span class="c1"># 系数在前，变量在后</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerms</span><span class="p">([</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">])</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">GRB</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">LinExpr</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>                      <span class="c1"># 变量在前，系数在后</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerms</span><span class="p">([</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">])</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">COPT</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>设置目标</td>
+<td><code>m.setObjective(expr, GRB.MAXIMIZE)</code></td>
+<td><code>m.setObjective(expr, COPT.MAXIMIZE)</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td><strong>只改方向</strong></td>
+<td><strong><code>m.ModelSense = GRB.MINIMIZE</code></strong></td>
+<td><strong><code>m.ObjSense = COPT.MINIMIZE</code></strong> 或 <code>m.setObjSense(COPT.MINIMIZE)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>目标常数项</strong></td>
+<td><strong><code>m.ObjCon = 5</code></strong></td>
+<td><strong><code>m.ObjConst = 5</code></strong> 或 <code>m.setObjConst(5)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>读取目标表达式</td>
+<td><code>m.getObjective()</code></td>
+<td><code>m.getObjective()</code></td>
+<td></td>
+</tr>
+<tr>
+<td>变量的目标系数</td>
+<td><code>x.Obj</code></td>
+<td><code>x.Obj</code></td>
+<td>同名</td>
+</tr>
+<tr>
+<td>多目标</td>
+<td><code>m.setObjectiveN(expr, index, priority, weight, ...)</code></td>
+<td><code>m.setObjectiveN(index, expr, sense, priority, weight, ...)</code></td>
+<td><strong>参数顺序不同</strong>，第 4 章</td>
+</tr>
+<tr>
+<td>矩阵形式目标</td>
+<td><code>m.setMObjective(...)</code></td>
+<td><code>m.setMObjective(...)</code></td>
+<td>第 4 章</td>
+</tr>
+<tr>
+<td>线性表达式逐项添加</td>
+<td><code>expr.addTerms(coeffs, vars)</code></td>
+<td><code>expr.addTerm(var, coeff)</code> / <code>expr.addTerms(vars, coeffs)</code></td>
+<td><strong>参数顺序相反</strong>，见上文</td>
+</tr>
+<tr>
+<td>表达式常数项</td>
+<td><code>gp.LinExpr(1.0)</code> / <code>expr.getConstant()</code></td>
+<td><code>cp.LinExpr(1.0)</code> / <code>expr.getConstant()</code></td>
+<td>一致</td>
+</tr>
+</tbody>
+</table>
+<h2 id="25">2.5 求解与状态码<a class="headerlink" href="#25" title="Permanent link">&para;</a></h2>
+<p>求解方法名不同（<code>optimize()</code> 与 <code>solve()</code>），状态常量同名但数值不同，判断是否已有可用解的属性也不同：</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>Gurobi</th>
+<th>COPT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>求解</td>
+<td><code>m.optimize()</code></td>
+<td><code>m.solve()</code></td>
+</tr>
+<tr>
+<td>只解 LP 松弛 / LP 问题</td>
+<td><code>m.relax().optimize()</code></td>
+<td><code>m.solveLP()</code>（忽略整数性，直接求解 LP）</td>
+</tr>
+<tr>
+<td>中断</td>
+<td><code>m.terminate()</code></td>
+<td><code>m.interrupt()</code></td>
+</tr>
+<tr>
+<td>清除解</td>
+<td><code>m.reset()</code> / <code>m.reset(1)</code></td>
+<td><code>m.reset()</code> / <code>m.resetAll()</code>（后者同时清除 MIP 初始解、IIS 等附加信息）</td>
+</tr>
+<tr>
+<td>读取状态</td>
+<td><code>m.Status</code></td>
+<td><code>m.Status</code></td>
+</tr>
+<tr>
+<td>是否有可用解</td>
+<td><code>m.SolCount &gt; 0</code></td>
+<td><code>m.HasSol</code>（旧属性 <code>HasMipSol</code> / <code>HasLpSol</code> 在 8.0 文档中已标记为弃用）</td>
+</tr>
+</tbody>
+</table>
+<p>状态码对照如下。两边都应使用常量，不要写数值：</p>
+<table>
+<thead>
+<tr>
+<th>含义</th>
+<th>Gurobi 常量（值）</th>
+<th>COPT 常量（值）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>未开始求解</td>
+<td><code>GRB.LOADED</code> (1)</td>
+<td><code>COPT.UNSTARTED</code> (0)</td>
+<td></td>
+</tr>
+<tr>
+<td>最优</td>
+<td><code>GRB.OPTIMAL</code> (2)</td>
+<td><code>COPT.OPTIMAL</code> (1)</td>
+<td></td>
+</tr>
+<tr>
+<td>不可行</td>
+<td><code>GRB.INFEASIBLE</code> (3)</td>
+<td><code>COPT.INFEASIBLE</code> (2)</td>
+<td></td>
+</tr>
+<tr>
+<td>不可行或无界</td>
+<td><code>GRB.INF_OR_UNBD</code> (4)</td>
+<td><code>COPT.INF_OR_UNB</code> (4)</td>
+<td></td>
+</tr>
+<tr>
+<td>无界</td>
+<td><code>GRB.UNBOUNDED</code> (5)</td>
+<td><code>COPT.UNBOUNDED</code> (3)</td>
+<td></td>
+</tr>
+<tr>
+<td>数值困难</td>
+<td><code>GRB.NUMERIC</code> (12)</td>
+<td><code>COPT.NUMERICAL</code> (5)</td>
+<td></td>
+</tr>
+<tr>
+<td>达到节点数上限</td>
+<td><code>GRB.NODE_LIMIT</code> (8)</td>
+<td><code>COPT.NODELIMIT</code> (6)</td>
+<td></td>
+</tr>
+<tr>
+<td>达到时间上限</td>
+<td><code>GRB.TIME_LIMIT</code> (9)</td>
+<td><code>COPT.TIMEOUT</code> (8)</td>
+<td></td>
+</tr>
+<tr>
+<td>达到迭代上限</td>
+<td><code>GRB.ITERATION_LIMIT</code> (7)</td>
+<td><code>COPT.ITERLIMIT</code> (11)</td>
+<td></td>
+</tr>
+<tr>
+<td>用户中断</td>
+<td><code>GRB.INTERRUPTED</code> (11)</td>
+<td><code>COPT.INTERRUPTED</code> (10)</td>
+<td></td>
+</tr>
+<tr>
+<td>解精度不足</td>
+<td><code>GRB.SUBOPTIMAL</code> (13)</td>
+<td><code>COPT.IMPRECISE</code> (7)</td>
+<td>含义相近：返回了解，但未满足精度要求</td>
+</tr>
+<tr>
+<td>内部错误导致未完成</td>
+<td>无</td>
+<td><code>COPT.UNFINISHED</code> (9)</td>
+<td></td>
+</tr>
+<tr>
+<td>非凸 / 非线性问题的局部最优、局部不可行</td>
+<td><code>GRB.LOCALLY_OPTIMAL</code> (18) / <code>GRB.LOCALLY_INFEASIBLE</code> (19)</td>
+<td><code>COPT.LOCAL_OPTIMAL</code> (20) / <code>COPT.LOCAL_INFEASIBLE</code> (21)</td>
+<td>Gurobi 13 新增；第 4 章</td>
+</tr>
+</tbody>
+</table>
+<p>常见写法：达到时间上限但已有可行解时，使用该解：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">m</span><span class="o">.</span><span class="n">Params</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">Status</span> <span class="o">==</span> <span class="n">GRB</span><span class="o">.</span><span class="n">OPTIMAL</span> <span class="ow">or</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Status</span> <span class="o">==</span> <span class="n">GRB</span><span class="o">.</span><span class="n">TIME_LIMIT</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">SolCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">use</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">ObjVal</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">MIPGap</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">TimeLimit</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">m</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">COPT</span><span class="o">.</span><span class="n">OPTIMAL</span> <span class="ow">or</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">COPT</span><span class="o">.</span><span class="n">TIMEOUT</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">hassol</span><span class="p">):</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">use</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">objval</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">bestgap</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<h2 id="26">2.6 结果读取：属性对照<a class="headerlink" href="#26" title="Permanent link">&para;</a></h2>
+<p>单个变量或约束的结果按属性读取，批量读取用模型方法。Gurobi 的 <code>getAttr</code> 对应 COPT 的 <code>getInfo</code>，COPT 另有 <code>getValues</code>、<code>getDuals</code> 等不带参数的快捷方法：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">Pi</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">ObjVal</span><span class="p">)</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">"X"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">getVars</span><span class="p">())</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">duals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">"Pi"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">getConstrs</span><span class="p">())</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">objval</span><span class="p">)</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getValues</span><span class="p">()</span>        <span class="c1"># 或 m.getInfo(COPT.Info.Value, m.getVars())</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">duals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getDuals</span><span class="p">()</span>        <span class="c1"># 或 m.getInfo(COPT.Info.Dual, m.getConstrs())</span>
+</span></code></pre></div>
+</div>
+<p>给 MIP 提供初始解的写法不同。Gurobi 给变量的 <code>Start</code> 属性赋值；COPT 用 <code>setMipStart</code> 设置，最后调用一次 <code>loadMipStart</code> 载入：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">x</span><span class="o">.</span><span class="n">Start</span> <span class="o">=</span> <span class="mf">1.0</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">y</span><span class="o">.</span><span class="n">Start</span> <span class="o">=</span> <span class="mf">0.0</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">m</span><span class="o">.</span><span class="n">setMipStart</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">m</span><span class="o">.</span><span class="n">loadMipStart</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p>下表 COPT 列按 COPT 文档中的原始大小写给出属性名（模型属性如 <code>ObjVal</code>、<code>BestGap</code>，变量 / 约束信息项如 <code>Value</code>、<code>RedCost</code>、<code>Dual</code>）。按 COPT 文档，这些名称也可以全小写访问（<code>m.objval</code>、<code>x.value</code>）；<code>x.x</code>、<code>x.rc</code>、<code>c.pi</code> 以及 <code>name</code>、<code>vtype</code>、<code>basis</code>、<code>index</code> 是文档另外给出的简写属性，只有小写形式。<strong>加粗</strong>的行是名字本身不同、必须修改的属性；其余行两边同名，Gurobi 写法可以直接保留。</p>
+<p><strong>变量属性</strong></p>
+<table>
+<thead>
+<tr>
+<th>含义</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>解值</strong></td>
+<td><strong><code>x.X</code></strong></td>
+<td><strong><code>x.Value</code></strong>（简写 <code>x.x</code>）</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>变量名</strong></td>
+<td><strong><code>x.VarName</code></strong></td>
+<td><strong><code>x.name</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td>下界 / 上界</td>
+<td><code>x.LB</code> / <code>x.UB</code></td>
+<td><code>x.LB</code> / <code>x.UB</code></td>
+<td></td>
+</tr>
+<tr>
+<td>目标系数</td>
+<td><code>x.Obj</code></td>
+<td><code>x.Obj</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>类型</strong></td>
+<td><strong><code>x.VType</code></strong></td>
+<td><strong><code>x.vtype</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>检验数（LP）</strong></td>
+<td><strong><code>x.RC</code></strong></td>
+<td><strong><code>x.RedCost</code></strong>（简写 <code>x.rc</code>）</td>
+<td>仅 LP 或有 LP 解时可用</td>
+</tr>
+<tr>
+<td><strong>基状态</strong></td>
+<td><strong><code>x.VBasis</code></strong></td>
+<td><strong><code>x.basis</code></strong></td>
+<td>值的编码不同（见 2.8 节）</td>
+</tr>
+<tr>
+<td><strong>MIP 初始解</strong></td>
+<td><strong><code>x.Start = v</code></strong></td>
+<td><strong><code>m.setMipStart(x, v)</code> + <code>m.loadMipStart()</code></strong></td>
+<td>第 3 章</td>
+</tr>
+<tr>
+<td><strong>解池中第 k 个解</strong></td>
+<td><strong><code>m.Params.SolutionNumber = k; x.PoolNX</code></strong></td>
+<td><strong><code>m.getPoolSolution(k, vars)</code></strong></td>
+<td>Gurobi 13 起 <code>Xn</code> 已弃用，改为 <code>PoolNX</code>；第 4 章</td>
+</tr>
+<tr>
+<td>灵敏度分析</td>
+<td><code>x.SAObjLow/Up</code>、<code>x.SALBLow/Up</code>、<code>x.SAUBLow/Up</code></td>
+<td><code>x.SAObjLow/Up</code>、<code>x.SALBLow/Up</code>、<code>x.SAUBLow/Up</code></td>
+<td>同名；COPT 默认不计算，需要时设置 <code>ReqSensitivity = 1</code> 开启</td>
+</tr>
+<tr>
+<td><strong>无界方向</strong></td>
+<td><strong><code>x.UnbdRay</code></strong></td>
+<td><strong><code>x.PrimalRay</code></strong></td>
+<td>两边都需显式开启：Gurobi <code>InfUnbdInfo = 1</code>，COPT <code>ReqFarkasRay = 1</code></td>
+</tr>
+<tr>
+<td><strong>IIS 成员</strong></td>
+<td><strong><code>x.IISLB</code> / <code>x.IISUB</code></strong></td>
+<td><strong><code>x.getLowerIIS()</code> / <code>x.getUpperIIS()</code></strong></td>
+<td>需先 <code>computeIIS()</code></td>
+</tr>
+<tr>
+<td>索引</td>
+<td><code>x.index</code></td>
+<td><code>x.index</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>约束属性</strong></p>
+<table>
+<thead>
+<tr>
+<th>含义</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>约束名</strong></td>
+<td><strong><code>c.ConstrName</code></strong></td>
+<td><strong><code>c.name</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>右端项 / 方向</strong></td>
+<td><strong><code>c.RHS</code> / <code>c.Sense</code></strong></td>
+<td><strong><code>c.LB</code> / <code>c.UB</code></strong></td>
+<td>两侧界表示，见 2.3 节</td>
+</tr>
+<tr>
+<td><strong>对偶值（影子价格）</strong></td>
+<td><strong><code>c.Pi</code></strong></td>
+<td><strong><code>c.Dual</code></strong>（简写 <code>c.pi</code>）</td>
+<td>仅 LP 或有 LP 解时可用</td>
+</tr>
+<tr>
+<td>松弛量</td>
+<td><code>c.Slack</code></td>
+<td><code>c.Slack</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>基状态</strong></td>
+<td><strong><code>c.CBasis</code></strong></td>
+<td><strong><code>c.basis</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Farkas 对偶</strong></td>
+<td><strong><code>c.FarkasDual</code></strong></td>
+<td><strong><code>c.DualFarkas</code></strong></td>
+<td>两边都需显式开启：Gurobi <code>InfUnbdInfo = 1</code>，COPT <code>ReqFarkasRay = 1</code></td>
+</tr>
+<tr>
+<td><strong>IIS 成员</strong></td>
+<td><strong><code>c.IISConstr</code></strong></td>
+<td><strong><code>c.getLowerIIS()</code> / <code>c.getUpperIIS()</code></strong></td>
+<td>COPT 区分是下界还是上界参与了 IIS</td>
+</tr>
+<tr>
+<td>索引</td>
+<td><code>c.index</code></td>
+<td><code>c.index</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>模型属性</strong></p>
+<table>
+<thead>
+<tr>
+<th>含义</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>求解状态</td>
+<td><code>m.Status</code></td>
+<td><code>m.Status</code></td>
+<td></td>
+</tr>
+<tr>
+<td>目标值</td>
+<td><code>m.ObjVal</code></td>
+<td><code>m.ObjVal</code></td>
+<td></td>
+</tr>
+<tr>
+<td>目标界</td>
+<td><code>m.ObjBound</code></td>
+<td><code>m.ObjBound</code></td>
+<td>旧属性 <code>BestBnd</code> 在 8.0 文档中已标记为弃用</td>
+</tr>
+<tr>
+<td><strong>相对 gap</strong></td>
+<td><strong><code>m.MIPGap</code></strong></td>
+<td><strong><code>m.BestGap</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>求解时间</strong></td>
+<td><strong><code>m.Runtime</code></strong></td>
+<td><strong><code>m.SolvingTime</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>节点数</strong></td>
+<td><strong><code>m.NodeCount</code></strong></td>
+<td><strong><code>m.NodeCnt</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>单纯形迭代数</strong></td>
+<td><strong><code>m.IterCount</code></strong></td>
+<td><strong><code>m.SimplexIter</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>内点法迭代数</strong></td>
+<td><strong><code>m.BarIterCount</code></strong></td>
+<td><strong><code>m.BarrierIter</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>解池中的解个数</strong></td>
+<td><strong><code>m.SolCount</code></strong></td>
+<td><strong><code>m.PoolSols</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>变量 / 约束 / 非零元个数</strong></td>
+<td><strong><code>m.NumVars</code> / <code>m.NumConstrs</code> / <code>m.NumNZs</code></strong></td>
+<td><strong><code>m.Cols</code> / <code>m.Rows</code> / <code>m.Elems</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>整数 / 二元变量个数</strong></td>
+<td><strong><code>m.NumIntVars</code> / <code>m.NumBinVars</code></strong></td>
+<td><strong><code>m.Ints</code> / <code>m.Bins</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>二次约束 / SOS 个数</strong></td>
+<td><strong><code>m.NumQConstrs</code> / <code>m.NumSOS</code></strong></td>
+<td><strong><code>m.QConstrs</code> / <code>m.Soss</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td>是否 MIP</td>
+<td><code>m.IsMIP</code></td>
+<td><code>m.IsMIP</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>是否有二次目标</strong></td>
+<td><strong><code>m.IsQP</code></strong></td>
+<td><strong><code>m.HasQObj</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>目标方向 / 常数项</strong></td>
+<td><strong><code>m.ModelSense</code> / <code>m.ObjCon</code></strong></td>
+<td><strong><code>m.ObjSense</code> / <code>m.ObjConst</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>是否有解</strong></td>
+<td><strong><code>m.SolCount &gt; 0</code></strong></td>
+<td><strong><code>m.HasSol</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>系数范围</strong></td>
+<td><strong><code>m.MaxCoeff/MinCoeff</code>、<code>m.MaxRHS/MinRHS</code>、<code>m.MaxObjCoeff/MinObjCoeff</code></strong></td>
+<td><strong><code>m.MaxElem/MinElem</code>、<code>m.MaxRHS/MinRHS</code>、<code>m.MaxCost/MinCost</code></strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>批量读取</strong></p>
+<table>
+<thead>
+<tr>
+<th>Gurobi</th>
+<th>COPT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>m.getAttr("X", m.getVars())</code></td>
+<td><code>m.getValues()</code> 或 <code>m.getInfo(COPT.Info.Value, vars)</code></td>
+</tr>
+<tr>
+<td><code>m.getAttr("Pi", m.getConstrs())</code></td>
+<td><code>m.getDuals()</code> 或 <code>m.getInfo(COPT.Info.Dual, constrs)</code></td>
+</tr>
+<tr>
+<td><code>m.getAttr("RC", m.getVars())</code></td>
+<td><code>m.getRedcosts()</code> 或 <code>m.getInfo(COPT.Info.RedCost, vars)</code></td>
+</tr>
+<tr>
+<td><code>m.getAttr("Slack", m.getConstrs())</code></td>
+<td><code>m.getSlacks()</code> 或 <code>m.getInfo(COPT.Info.Slack, constrs)</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td><code>m.getLpSolution()</code>：一次返回 <code>(values, slacks, duals, redcosts)</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="27">2.7 参数<a class="headerlink" href="#27" title="Permanent link">&para;</a></h2>
+<p>参数名大多相同，设置方式有三种，两边都支持属性式、常量式和字符串式：</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">m</span><span class="o">.</span><span class="n">Params</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">MIPGap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">"Threads"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">m</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>                <span class="c1"># 也可写作 m.param.timelimit = 60</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">RelGap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>   <span class="c1"># MIPGap 在 COPT 中叫 RelGap</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">"Threads"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>设置方式</strong></p>
+<table>
+<thead>
+<tr>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>m.Params.TimeLimit = 60</code></td>
+<td><code>m.Param.TimeLimit = 60</code></td>
+<td>属性式（Gurobi 是 <code>Params</code>，COPT 是 <code>Param</code>；COPT 团队的对照表中写作 <code>m.param.timelimit</code>，同样有效）</td>
+</tr>
+<tr>
+<td><code>m.setParam(GRB.Param.TimeLimit, 60)</code></td>
+<td><code>m.setParam(COPT.Param.TimeLimit, 60)</code></td>
+<td>常量式，两边文档的推荐写法</td>
+</tr>
+<tr>
+<td><code>m.setParam("TimeLimit", 60)</code></td>
+<td><code>m.setParam("TimeLimit", 60)</code></td>
+<td>两边写法相同。Gurobi 文档明确支持字符串形式；COPT 侧为实测结果（<code>COPT.Param.TimeLimit</code> 的值即字符串 <code>"TimeLimit"</code>）</td>
+</tr>
+<tr>
+<td><code>m.Params.TimeLimit</code>（读取）</td>
+<td><code>m.Param.TimeLimit</code> 或 <code>m.getParam(COPT.Param.TimeLimit)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>m.getParamInfo("TimeLimit")</code></td>
+<td><code>m.getParamInfo(COPT.Param.TimeLimit)</code></td>
+<td>同名，但返回的元组结构不同：Gurobi 为 (名称, 类型, 当前值, 最小值, 最大值, 默认值)；COPT 为 (名称, 当前值, 默认值, 最小值, 最大值)（依据 coptpy 方法的文档字符串）</td>
+</tr>
+<tr>
+<td><code>m.resetParams()</code></td>
+<td><code>m.resetParam()</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>m.read("x.prm")</code> / <code>m.write("x.prm")</code></td>
+<td><code>m.read("x.par")</code> / <code>m.write("x.par")</code></td>
+<td>参数文件后缀不同</td>
+</tr>
+</tbody>
+</table>
+<p><strong>常用参数对照</strong></p>
+<p>"语义"列标注两边的取值和含义是否一致；标"不同"的参数不能直接照搬数值。</p>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>语义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时间上限（秒）</td>
+<td><code>TimeLimit</code></td>
+<td><code>TimeLimit</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>找到可行解后的时间上限</td>
+<td>无</td>
+<td><code>SolTimeLimit</code></td>
+<td>COPT 特有</td>
+</tr>
+<tr>
+<td>相对 MIP gap</td>
+<td><code>MIPGap</code>（默认 1e-4）</td>
+<td><code>RelGap</code>（默认 1e-4）</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>绝对 MIP gap</td>
+<td><code>MIPGapAbs</code>（默认 1e-10）</td>
+<td><code>AbsGap</code>（默认 1e-6）</td>
+<td>含义一致，<strong>默认值不同</strong></td>
+</tr>
+<tr>
+<td>原始可行容差</td>
+<td><code>FeasibilityTol</code>（1e-6）</td>
+<td><code>FeasTol</code>（1e-6）</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>对偶可行容差</td>
+<td><code>OptimalityTol</code>（1e-6）</td>
+<td><code>DualTol</code>（1e-6）</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>整数容差</td>
+<td><code>IntFeasTol</code>（1e-5）</td>
+<td><code>IntTol</code>（1e-6）</td>
+<td>含义一致，<strong>默认值不同</strong></td>
+</tr>
+<tr>
+<td>线程数</td>
+<td><code>Threads</code>（0 = 自动）</td>
+<td><code>Threads</code>（-1 = 自动）</td>
+<td>"自动"的取值不同</td>
+</tr>
+<tr>
+<td>LP 算法</td>
+<td><code>Method</code></td>
+<td><code>LpMethod</code></td>
+<td><strong>取值不同</strong>：Gurobi 0 原始单纯形 / 1 对偶单纯形 / 2 内点法 / 3 并发 / 4 确定性并发 / 6 PDHG（一阶方法，13.0 新增）；COPT 1 对偶单纯形 / 2 内点法 / 3 交叉 / 4 并发 / 5 自动选择 / 6 一阶方法 (PDLP)。两边 -1 均为自动</td>
+</tr>
+<tr>
+<td>交叉（crossover）</td>
+<td><code>Crossover</code></td>
+<td><code>Crossover</code></td>
+<td>含义一致，取值范围不同</td>
+</tr>
+<tr>
+<td>预处理</td>
+<td><code>Presolve</code>（-1/0/1/2）</td>
+<td><code>Presolve</code>（-1/0/1/2/3/4）</td>
+<td>COPT 多两个更激进的级别</td>
+</tr>
+<tr>
+<td>缩放</td>
+<td><code>ScaleFlag</code></td>
+<td><code>Scaling</code></td>
+<td></td>
+</tr>
+<tr>
+<td>割平面强度</td>
+<td><code>Cuts</code></td>
+<td><code>CutLevel</code>（-1/0/1/2/3）</td>
+<td>含义相近</td>
+</tr>
+<tr>
+<td>启发式强度</td>
+<td><code>Heuristics</code>（占用时间比例，0–1）</td>
+<td><code>HeurLevel</code>（级别 -1/0/1/2/3）</td>
+<td><strong>语义不同</strong></td>
+</tr>
+<tr>
+<td>节点数上限</td>
+<td><code>NodeLimit</code></td>
+<td><code>NodeLimit</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>内点法迭代上限</td>
+<td><code>BarIterLimit</code></td>
+<td><code>BarIterLimit</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>内存上限</td>
+<td><code>MemLimit</code> / <code>SoftMemLimit</code></td>
+<td><code>MemLimit</code></td>
+<td><strong>单位不同</strong>：Gurobi 以 GB 计，COPT 以 MB 计</td>
+</tr>
+<tr>
+<td>懒约束开关</td>
+<td><code>LazyConstraints</code></td>
+<td><code>LazyConstraints</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>非凸处理</td>
+<td><code>NonConvex</code></td>
+<td><code>NonConvex</code></td>
+<td>含义相近，取值不同（第 4 章）</td>
+</tr>
+<tr>
+<td>IIS 算法</td>
+<td><code>IISMethod</code></td>
+<td><code>IISMethod</code></td>
+<td>取值不同</td>
+</tr>
+<tr>
+<td>日志开关</td>
+<td><code>OutputFlag</code></td>
+<td><code>Logging</code></td>
+<td></td>
+</tr>
+<tr>
+<td>日志到控制台</td>
+<td><code>LogToConsole</code></td>
+<td><code>LogToConsole</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>日志文件</td>
+<td><code>LogFile</code></td>
+<td>无参数，用 <code>m.setLogFile("x.log")</code></td>
+<td></td>
+</tr>
+<tr>
+<td>初始解处理</td>
+<td><code>StartNodeLimit</code></td>
+<td><code>MipStartMode</code> / <code>MipStartNodeLimit</code></td>
+<td>第 3 章</td>
+</tr>
+<tr>
+<td>调参器时间</td>
+<td><code>TuneTimeLimit</code></td>
+<td><code>TuneTimeLimit</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>灵敏度分析</td>
+<td>自动可用</td>
+<td><code>ReqSensitivity = 1</code></td>
+<td>COPT 默认关闭，需要时开启</td>
+</tr>
+<tr>
+<td>Farkas 证书 / 无界方向</td>
+<td><code>InfUnbdInfo = 1</code></td>
+<td><code>ReqFarkasRay = 1</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">从 COPT 默认参数开始</p>
+<p>COPT 的算法类参数（<code>LpMethod</code>、<code>Presolve</code>、<code>CutLevel</code>、<code>HeurLevel</code>、<code>Scaling</code> 等）默认值为 -1，表示由求解器根据模型特征自动选择。在 Gurobi 上调好的参数组合针对的是 Gurobi 的算法实现，直接照搬到 COPT 通常没有意义，也可能降低性能。建议迁移时只保留业务上必需的限制（时间上限、gap、线程数），先用默认参数运行基准测试；性能参数的调整见第 6 章，可以使用 COPT 的调参器 <code>m.tune()</code>。</p>
+</div>
+<h2 id="28">2.8 常量<a class="headerlink" href="#28" title="Permanent link">&para;</a></h2>
+<p>常量名称基本一致，需要注意的是 <code>INFINITY</code> 的数值和基状态的编码不同：</p>
+<table>
+<thead>
+<tr>
+<th>含义</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>连续 / 二元 / 整数</td>
+<td><code>GRB.CONTINUOUS</code> (<code>'C'</code>) / <code>GRB.BINARY</code> (<code>'B'</code>) / <code>GRB.INTEGER</code> (<code>'I'</code>)</td>
+<td><code>COPT.CONTINUOUS</code> / <code>COPT.BINARY</code> / <code>COPT.INTEGER</code></td>
+<td>同名；COPT 文档只给常量名不给字面值，请使用常量</td>
+</tr>
+<tr>
+<td>最小化 / 最大化</td>
+<td><code>GRB.MINIMIZE</code> (1) / <code>GRB.MAXIMIZE</code> (-1)</td>
+<td><code>COPT.MINIMIZE</code> / <code>COPT.MAXIMIZE</code></td>
+<td>同名；请使用常量</td>
+</tr>
+<tr>
+<td>无穷大</td>
+<td><code>GRB.INFINITY</code> (1e100)</td>
+<td><code>COPT.INFINITY</code> (1e30)</td>
+<td><strong>值不同</strong>，见 2.2 节</td>
+</tr>
+<tr>
+<td>约束方向</td>
+<td><code>GRB.LESS_EQUAL</code> (<code>'&lt;'</code>) / <code>GRB.GREATER_EQUAL</code> (<code>'&gt;'</code>) / <code>GRB.EQUAL</code> (<code>'='</code>)</td>
+<td><code>COPT.LESS_EQUAL</code> / <code>COPT.GREATER_EQUAL</code> / <code>COPT.EQUAL</code></td>
+<td>同名；请使用常量</td>
+</tr>
+<tr>
+<td>SOS 类型</td>
+<td><code>GRB.SOS_TYPE1</code> / <code>GRB.SOS_TYPE2</code></td>
+<td><code>COPT.SOS_TYPE1</code> / <code>COPT.SOS_TYPE2</code></td>
+<td></td>
+</tr>
+<tr>
+<td>基状态</td>
+<td><code>GRB.BASIC</code> (0) / <code>NONBASIC_LOWER</code> (-1) / <code>NONBASIC_UPPER</code> (-2) / <code>SUPERBASIC</code> (-3)</td>
+<td><code>COPT.BASIS_LOWER</code> (0) / <code>BASIS_BASIC</code> (1) / <code>BASIS_UPPER</code> (2) / <code>BASIS_SUPERBASIC</code> (3) / <code>BASIS_FIXED</code> (4)</td>
+<td><strong>编码完全不同</strong></td>
+</tr>
+<tr>
+<td>参数 / 属性 / 信息 命名空间</td>
+<td><code>GRB.Param.*</code> / <code>GRB.Attr.*</code></td>
+<td><code>COPT.Param.*</code> / <code>COPT.Attr.*</code>（模型级）/ <code>COPT.Info.*</code>（变量与约束级）</td>
+<td>COPT 把模型属性和变量/约束信息分成两个命名空间</td>
+</tr>
+<tr>
+<td>回调触发点</td>
+<td><code>GRB.Callback.MIPSOL</code> 等</td>
+<td><code>COPT.CBCONTEXT_MIPSOL</code> 等</td>
+<td>第 3 章</td>
+</tr>
+</tbody>
+</table>
+<h2 id="29">2.9 文件读写<a class="headerlink" href="#29" title="Permanent link">&para;</a></h2>
+<p>两边的 <code>m.write(filename)</code> 都按后缀判断格式。读取时有区别：Gurobi 的模型文件要用模块级 <code>gp.read()</code>，<code>m.read()</code> 只读基、初始解、参数等辅助文件；COPT 统一用 <code>m.read()</code>，模型与辅助文件都按后缀识别。</p>
+<table>
+<thead>
+<tr>
+<th>内容</th>
+<th>Gurobi 后缀</th>
+<th>COPT 后缀</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型（文本）</td>
+<td><code>.lp</code>、<code>.mps</code>、<code>.rew</code>、<code>.rlp</code></td>
+<td><code>.lp</code>、<code>.mps</code></td>
+<td></td>
+</tr>
+<tr>
+<td>模型（二进制）</td>
+<td>无</td>
+<td><code>.bin</code></td>
+<td>COPT 特有</td>
+</tr>
+<tr>
+<td>锥规划模型</td>
+<td>无</td>
+<td><code>.cbf</code></td>
+<td></td>
+</tr>
+<tr>
+<td>解</td>
+<td><code>.sol</code>、<code>.json</code></td>
+<td><code>.sol</code>；JSON 格式通过 <code>writeJsonSol()</code> / <code>readJsonSol()</code></td>
+<td></td>
+</tr>
+<tr>
+<td>MIP 初始解</td>
+<td><code>.mst</code></td>
+<td><code>.mst</code></td>
+<td></td>
+</tr>
+<tr>
+<td>基</td>
+<td><code>.bas</code></td>
+<td><code>.bas</code></td>
+<td></td>
+</tr>
+<tr>
+<td>分支优先级</td>
+<td><code>.ord</code>（仅读取）</td>
+<td><code>.ord</code></td>
+<td></td>
+</tr>
+<tr>
+<td>参数</td>
+<td><code>.prm</code></td>
+<td><code>.par</code></td>
+<td><strong>后缀不同</strong></td>
+</tr>
+<tr>
+<td>IIS</td>
+<td><code>.ilp</code></td>
+<td><code>.iis</code>（通过 <code>writeIIS()</code> 输出）</td>
+<td>需先 <code>computeIIS()</code></td>
+</tr>
+<tr>
+<td>可行性松弛问题</td>
+<td>无</td>
+<td><code>.relax</code>（通过 <code>writeRelax()</code> 输出）</td>
+<td>需先 <code>feasRelax</code></td>
+</tr>
+<tr>
+<td>对偶问题</td>
+<td><code>.dua</code>、<code>.dlp</code></td>
+<td>写 <code>.lp</code> / <code>.mps</code> / <code>.bin</code> 时把参数 <code>WriteDualProb</code> 设为 1</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>除了按后缀自动判断的 <code>write</code>/<code>read</code>，COPT 还提供明确格式的方法（<code>writeLp</code>、<code>writeMps</code>、<code>writeBin</code>、<code>writeSol</code>、<code>writeMst</code>、<code>writeBasis</code>、<code>writeParam</code>、<code>writeIIS</code>、<code>writeRelax</code>、<code>readMps</code>、<code>readLp</code>、<code>readSol</code>、<code>readMst</code>、<code>readBasis</code>、<code>readParam</code> 等），行为相同。</p>
+<h2 id="210">2.10 本章未覆盖的内容<a class="headerlink" href="#210" title="Permanent link">&para;</a></h2>
+<p>以下功能两边都提供，但接口设计差异较大，将在后续章节单独说明：</p>
+<ul>
+<li><strong>MIP 初始解</strong>：<code>x.Start</code> → <code>setMipStart</code> + <code>loadMipStart</code>（第 3 章）</li>
+<li><strong>回调</strong>：Gurobi 的函数式回调 <code>optimize(callback)</code> → COPT 继承 <code>CallbackBase</code> 类（第 3 章）</li>
+<li><strong>求解后修改模型再求解</strong>：两侧界约束、参数保留、热启动行为（第 3 章）</li>
+<li><strong>矩阵接口</strong>、<strong>多目标</strong>、<strong>解池</strong>、<strong>IIS 与可行性松弛</strong>、<strong>调参器</strong>、<strong>锥约束与非凸/非线性</strong>（第 4 章）</li>
+</ul>
+<p><em>第 3 章及后续章节陆续发布。如果你在迁移中遇到本文未覆盖的用法，欢迎在 <a href="https://github.com/redpanda997/gurobi-to-copt/issues">GitHub 仓库</a> 提 issue，高频问题会补进后续章节。</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="页脚" >
+        
+          
+          <a href="../chapter1/" class="md-footer__link md-footer__link--prev" aria-label="上一页: 第 1 章 十分钟快速上手">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              <div class="md-ellipsis">
+                第 1 章 十分钟快速上手
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 redpanda997
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/redpanda997/gurobi-to-copt" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://guide.coap.online/copt/en-doc/" target="_blank" rel="noopener" title="COPT 文档" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

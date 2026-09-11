@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://redpanda997.github.io/gurobi-to-copt/</loc>
+        <lastmod>2026-09-11</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://redpanda997.github.io/gurobi-to-copt/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://redpanda997.github.io/gurobi-to-copt/en/"/>
+    </url>
+    <url>
+        <loc>https://redpanda997.github.io/gurobi-to-copt/chapter1/</loc>
+        <lastmod>2026-09-11</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://redpanda997.github.io/gurobi-to-copt/chapter1/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://redpanda997.github.io/gurobi-to-copt/en/chapter1/"/>
+    </url>
+    <url>
+        <loc>https://redpanda997.github.io/gurobi-to-copt/chapter2/</loc>
+        <lastmod>2026-09-11</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://redpanda997.github.io/gurobi-to-copt/chapter2/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://redpanda997.github.io/gurobi-to-copt/en/chapter2/"/>
+    </url>
+    <url>
+        <loc>https://redpanda997.github.io/gurobi-to-copt/en/</loc>
+        <lastmod>2026-09-11</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://redpanda997.github.io/gurobi-to-copt/en/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://redpanda997.github.io/gurobi-to-copt/"/>
+    </url>
+    <url>
+        <loc>https://redpanda997.github.io/gurobi-to-copt/en/chapter1/</loc>
+        <lastmod>2026-09-11</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://redpanda997.github.io/gurobi-to-copt/en/chapter1/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://redpanda997.github.io/gurobi-to-copt/chapter1/"/>
+    </url>
+    <url>
+        <loc>https://redpanda997.github.io/gurobi-to-copt/en/chapter2/</loc>
+        <lastmod>2026-09-11</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://redpanda997.github.io/gurobi-to-copt/en/chapter2/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://redpanda997.github.io/gurobi-to-copt/chapter2/"/>
+    </url>
+</urlset>

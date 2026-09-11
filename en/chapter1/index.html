@@ -1,0 +1,1007 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A practical guide for moving Python models from Gurobi to the COPT solver">
+      
+      
+      
+        <link rel="canonical" href="https://redpanda997.github.io/gurobi-to-copt/en/chapter1/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../chapter2/">
+      
+      
+        
+          <link rel="alternate" href="../../chapter1/" hreflang="zh">
+        
+          <link rel="alternate" href="./" hreflang="en">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Chapter 1 · Up and running in ten minutes - Migrating from Gurobi to COPT</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#chapter-1-up-and-running-in-ten-minutes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../" title="Migrating from Gurobi to COPT" class="md-header__button md-logo" aria-label="Migrating from Gurobi to COPT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Migrating from Gurobi to COPT
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Chapter 1 · Up and running in ten minutes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../chapter1/" hreflang="zh" class="md-select__link">
+              中文
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/redpanda997/gurobi-to-copt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    redpanda997/gurobi-to-copt
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../" title="Migrating from Gurobi to COPT" class="md-nav__button md-logo" aria-label="Migrating from Gurobi to COPT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Migrating from Gurobi to COPT
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/redpanda997/gurobi-to-copt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    redpanda997/gurobi-to-copt
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chapter 1 · Up and running in ten minutes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chapter 1 · Up and running in ten minutes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-licensing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Licensing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-a-first-model-side-by-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 A first model, side by side
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-a-more-typical-example-tupledict-quicksum-and-shadow-prices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 A more typical example: tupledict, quicksum and shadow prices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-chapter-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Chapter checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chapter 2 · Core mapping tables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-licensing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Licensing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-a-first-model-side-by-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 A first model, side by side
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-a-more-typical-example-tupledict-quicksum-and-shadow-prices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 A more typical example: tupledict, quicksum and shadow prices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-chapter-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Chapter checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+
+
+
+  
+    <a href="https://github.com/redpanda997/gurobi-to-copt/edit/main/docs/en/chapter1.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="chapter-1-up-and-running-in-ten-minutes">Chapter 1 — Up and running in ten minutes<a class="headerlink" href="#chapter-1-up-and-running-in-ten-minutes" title="Permanent link">&para;</a></h1>
+<p>This chapter covers installation, license configuration and two complete examples. It shows how to run a Gurobi model on COPT and how the two APIs correspond.</p>
+<h2 id="11-installation">1.1 Installation<a class="headerlink" href="#11-installation" title="Permanent link">&para;</a></h2>
+<p>Both solvers ship as pip packages:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Gurobi</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span>gurobipy
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># COPT</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span>coptpy
+</span></code></pre></div>
+<p>The COPT documentation recommends installing and configuring COPT before using the Python interface: the full installer is available from the <a href="https://copt.shanshu.ai">COPT website</a> and also provides the command-line tool <code>copt_cmd</code> and the C/C++/Java/C# interfaces.</p>
+<p>Verify the installation:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coptpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cp</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coptpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">COPT</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">VERSION_MAJOR</span><span class="p">,</span> <span class="n">COPT</span><span class="o">.</span><span class="n">VERSION_MINOR</span><span class="p">,</span> <span class="n">COPT</span><span class="o">.</span><span class="n">VERSION_TECHNICAL</span><span class="p">)</span>   <span class="c1"># e.g. 8 0 6</span>
+</span></code></pre></div>
+<h2 id="12-licensing">1.2 Licensing<a class="headerlink" href="#12-licensing" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Gurobi</th>
+<th>COPT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>License files</td>
+<td><code>gurobi.lic</code> (one file)</td>
+<td><code>license.dat</code> + <code>license.key</code> (two files, same directory)</td>
+</tr>
+<tr>
+<td>Default search locations</td>
+<td>Home directory, <code>/opt/gurobi</code> (Linux), <code>C:\gurobi</code> (Windows), <code>/Library/gurobi</code> (macOS)</td>
+<td>A <code>copt/</code> folder in the home directory (e.g. <code>~/copt/</code>, <code>C:\Users\&lt;name&gt;\copt\</code>), or the directory of the COPT shared library / <code>copt_cmd</code></td>
+</tr>
+<tr>
+<td>Environment variable</td>
+<td><code>GRB_LICENSE_FILE</code> (points to the file)</td>
+<td><code>COPT_LICENSE_DIR</code> (points to the directory)</td>
+</tr>
+<tr>
+<td>Floating / cluster licenses</td>
+<td>Token Server</td>
+<td>Floating / cluster license (clients point to the license server via <code>EnvrConfig</code> or the <code>client.ini</code> configuration file)</td>
+</tr>
+<tr>
+<td>Cloud licensing</td>
+<td>WLS (Web License Service)</td>
+<td>Web license</td>
+</tr>
+<tr>
+<td>Trial</td>
+<td>The pip package includes a size-limited trial license (2000 variables × 2000 constraints)</td>
+<td>Apply for a free personal license on the COPT website</td>
+</tr>
+</tbody>
+</table>
+<p>All examples in this guide are small models and run under any type of COPT license.</p>
+<p>At startup COPT logs each location it checked for a license. When a license is not found, these lines are the first thing to check:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>[INFO] checks license for COPT v8.0.6 20260807
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>[WARN] no license files in current working folder: /home/laura/project
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>[WARN] no license files in HOME folder: /home/laura/copt
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>[INFO] empty environment variable: COPT_LICENSE_DIR
+</span></code></pre></div>
+<h2 id="13-a-first-model-side-by-side">1.3 A first model, side by side<a class="headerlink" href="#13-a-first-model-side-by-side" title="Permanent link">&para;</a></h2>
+<p>A minimal production-planning problem: two products A and B with unit profits 20 and 30; machine time 1 h for A and 2 h for B out of 100 h; raw material 3 kg for A and 2 kg for B out of 240 kg; demand for B is capped at 30 units; quantities are integers.</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">gurobipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gp</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gurobipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRB</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="s2">"production"</span><span class="p">)</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">a</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"A"</span><span class="p">)</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">b</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"B"</span><span class="p">)</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"machine_hours"</span><span class="p">)</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">240</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"raw_material"</span><span class="p">)</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="mi">20</span> <span class="o">*</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">30</span> <span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="n">GRB</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">Status</span> <span class="o">==</span> <span class="n">GRB</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Profit = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">ObjVal</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">getVars</span><span class="p">():</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">VarName</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">X</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coptpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cp</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coptpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">COPT</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">env</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Envr</span><span class="p">()</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">m</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">createModel</span><span class="p">(</span><span class="s2">"production"</span><span class="p">)</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">a</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">COPT</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"A"</span><span class="p">)</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">b</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVar</span><span class="p">(</span><span class="n">vtype</span><span class="o">=</span><span class="n">COPT</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"B"</span><span class="p">)</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"machine_hours"</span><span class="p">)</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">240</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"raw_material"</span><span class="p">)</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="mi">20</span> <span class="o">*</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">30</span> <span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="n">COPT</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">m</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">COPT</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Profit = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">objval</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">getVars</span><span class="p">():</span>
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Both scripts print exactly the same result:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Profit = 1850
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>A = 70
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>B = 15
+</span></code></pre></div>
+<p>Compared line by line, the two scripts differ in five places:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>import gurobipy as gp</code> / <code>from gurobipy import GRB</code></td>
+<td><code>import coptpy as cp</code> / <code>from coptpy import COPT</code></td>
+<td>Constant namespace <code>GRB</code> → <code>COPT</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>m = gp.Model("production")</code></td>
+<td><code>env = cp.Envr()</code> <br> <code>m = env.createModel("production")</code></td>
+<td>COPT requires an explicit environment <code>Envr</code>; models are created from it</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>m.optimize()</code></td>
+<td><code>m.solve()</code></td>
+<td>Different method name</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>GRB.OPTIMAL</code></td>
+<td><code>COPT.OPTIMAL</code></td>
+<td>Same constant name, <strong>different numeric value</strong> (2 vs 1); use the constant, not the number</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>v.VarName</code> / <code>v.X</code></td>
+<td><code>v.name</code> / <code>v.x</code></td>
+<td>The name attribute is <code>name</code> and the solution value is <code>x</code>; <code>m.ObjVal</code> and <code>m.Status</code> work unchanged in COPT, see below</td>
+</tr>
+</tbody>
+</table>
+<p>Item 5 needs a note. The COPT documentation states that model attributes and variable / constraint information can be accessed either in their <strong>original case</strong> (<code>m.ObjVal</code>, <code>m.Status</code>, <code>x.LB</code>, <code>x.UB</code>, <code>x.Obj</code>, <code>c.Slack</code>) or in <strong>all lowercase</strong> (<code>m.objval</code>, <code>x.lb</code>). Attributes that share a name on both sides can therefore keep the Gurobi spelling. What has to change are the attributes whose names differ, such as <code>VarName</code> → <code>name</code>, <code>X</code> → <code>x</code>, <code>RC</code> → <code>rc</code>, <code>Pi</code> → <code>pi</code>, <code>NumVars</code> → <code>cols</code> and <code>Runtime</code> → <code>solvingtime</code>; Chapter 2 has the full list. In practice coptpy's attribute lookup is case-insensitive, so <code>x.X</code> and <code>c.Pi</code> also run, but the documentation does not guarantee this and this guide does not rely on it. COPT code in this guide uses the lowercase spelling from the documentation; the mapping tables in Chapter 2 list attribute names in the documentation's original case, so rows with identical names are visible at a glance and only the bold rows are names that actually differ and must be edited.</p>
+<h2 id="14-a-more-typical-example-tupledict-quicksum-and-shadow-prices">1.4 A more typical example: tupledict, quicksum and shadow prices<a class="headerlink" href="#14-a-more-typical-example-tupledict-quicksum-and-shadow-prices" title="Permanent link">&para;</a></h2>
+<p>gurobipy code in real projects is usually built with <code>addVars</code>, <code>tupledict</code>, <code>quicksum</code> and <code>addConstrs</code>. The following transportation problem uses these, and also sets a parameter and reads dual values.</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">gurobipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gp</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">gurobipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRB</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">plants</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"P2"</span><span class="p">]</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">markets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"M1"</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">]</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">supply</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"P1"</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">"P2"</span><span class="p">:</span> <span class="mi">90</span><span class="p">}</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">demand</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"M1"</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">:</span> <span class="mi">60</span><span class="p">}</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">cost</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"M1"</span><span class="p">):</span> <span class="mi">4</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">):</span> <span class="mi">6</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">):</span> <span class="mi">9</span><span class="p">,</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="p">(</span><span class="s2">"P2"</span><span class="p">,</span> <span class="s2">"M1"</span><span class="p">):</span> <span class="mi">5</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P2"</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">):</span> <span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P2"</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">):</span> <span class="mi">7</span><span class="p">}</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">m</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="s2">"transport"</span><span class="p">)</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">m</span><span class="o">.</span><span class="n">Params</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">m</span><span class="o">.</span><span class="n">Params</span><span class="o">.</span><span class="n">OutputFlag</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="n">ship</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span><span class="n">plants</span><span class="p">,</span> <span class="n">markets</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"ship"</span><span class="p">)</span>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">((</span><span class="n">ship</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"*"</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">supply</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plants</span><span class="p">),</span>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>             <span class="n">name</span><span class="o">=</span><span class="s2">"supply"</span><span class="p">)</span>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="n">dem</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">((</span><span class="n">ship</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">demand</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">markets</span><span class="p">),</span>
+</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>                   <span class="n">name</span><span class="o">=</span><span class="s2">"demand"</span><span class="p">)</span>
+</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="n">obj</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">quicksum</span><span class="p">(</span><span class="n">cost</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">ship</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span>
+</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>                  <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plants</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">markets</span><span class="p">)</span>
+</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">GRB</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>
+</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">Status</span> <span class="o">==</span> <span class="n">GRB</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total cost = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">ObjVal</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ship</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">X</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">X</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">markets</span><span class="p">:</span>
+</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  shadow price </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">dem</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">Pi</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coptpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cp</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coptpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">COPT</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">plants</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"P2"</span><span class="p">]</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">markets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"M1"</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">]</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">supply</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"P1"</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">"P2"</span><span class="p">:</span> <span class="mi">90</span><span class="p">}</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">demand</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"M1"</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">:</span> <span class="mi">60</span><span class="p">}</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">cost</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"M1"</span><span class="p">):</span> <span class="mi">4</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">):</span> <span class="mi">6</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P1"</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">):</span> <span class="mi">9</span><span class="p">,</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="p">(</span><span class="s2">"P2"</span><span class="p">,</span> <span class="s2">"M1"</span><span class="p">):</span> <span class="mi">5</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P2"</span><span class="p">,</span> <span class="s2">"M2"</span><span class="p">):</span> <span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P2"</span><span class="p">,</span> <span class="s2">"M3"</span><span class="p">):</span> <span class="mi">7</span><span class="p">}</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">env</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Envr</span><span class="p">()</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">m</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">createModel</span><span class="p">(</span><span class="s2">"transport"</span><span class="p">)</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">TimeLimit</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">Logging</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="n">ship</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span><span class="n">plants</span><span class="p">,</span> <span class="n">markets</span><span class="p">,</span> <span class="n">nameprefix</span><span class="o">=</span><span class="s2">"ship"</span><span class="p">)</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">((</span><span class="n">ship</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"*"</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">supply</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plants</span><span class="p">),</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>             <span class="n">nameprefix</span><span class="o">=</span><span class="s2">"supply"</span><span class="p">)</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="n">dem</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addConstrs</span><span class="p">((</span><span class="n">ship</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">demand</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">markets</span><span class="p">),</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>                   <span class="n">nameprefix</span><span class="o">=</span><span class="s2">"demand"</span><span class="p">)</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="n">obj</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">quicksum</span><span class="p">(</span><span class="n">cost</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">ship</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>                  <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plants</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">markets</span><span class="p">)</span>
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">COPT</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="n">m</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>
+</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">COPT</span><span class="o">.</span><span class="n">OPTIMAL</span><span class="p">:</span>
+</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total cost = </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">objval</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>    <span class="k">for</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ship</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">markets</span><span class="p">:</span>
+</span><span id="__span-7-34"><a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  shadow price </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">dem</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">pi</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Again the output is identical:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Total cost = 770
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  P1 -&gt; M1: 40
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  P1 -&gt; M3: 20
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  P2 -&gt; M2: 50
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  P2 -&gt; M3: 40
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  shadow price M1: 4
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  shadow price M2: 5
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  shadow price M3: 9
+</span></code></pre></div>
+<p>Besides the five changes from 1.3, this example has three more differences, which are also the most common ones in a migration:</p>
+<table>
+<thead>
+<tr>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>m.Params.TimeLimit = 60</code></td>
+<td><code>m.setParam(COPT.Param.TimeLimit, 60)</code> <br> or <code>m.Param.TimeLimit = 60</code></td>
+<td>See 2.7 for parameters; most parameter <strong>names</strong> are identical, a few differ (e.g. <code>MIPGap</code> → <code>RelGap</code>)</td>
+</tr>
+<tr>
+<td><code>m.Params.OutputFlag = 0</code></td>
+<td><code>m.setParam(COPT.Param.Logging, 0)</code></td>
+<td>The logging switch is called <code>Logging</code></td>
+</tr>
+<tr>
+<td><code>addVars(..., name="ship")</code> <br> <code>addConstrs(..., name="supply")</code></td>
+<td><code>addVars(..., nameprefix="ship")</code> <br> <code>addConstrs(..., nameprefix="supply")</code></td>
+<td>For bulk creation the keyword is <code>nameprefix</code> and COPT generates the names automatically; the generated format also differs: Gurobi <code>ship[P1,M1]</code>, COPT (as observed) <code>ship(P1,M1)</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>tupledict</code> (with <code>.sum()</code> and <code>.prod()</code>), <code>quicksum</code>, <code>multidict</code> and <code>tuplelist</code> all exist under the same names in coptpy with the same behavior, so this part of your code normally needs no changes.</p>
+<h2 id="15-chapter-checklist">1.5 Chapter checklist<a class="headerlink" href="#15-chapter-checklist" title="Permanent link">&para;</a></h2>
+<p>To migrate a gurobipy script, apply the following seven basic replacements first. Except for item 3, they are the core rules listed in the <a href="https://github.com/leavesgrp/COPTPY-GUROBIPY">COPTPY-GUROBIPY</a> comparison table maintained by the COPT team:</p>
+<ol>
+<li><code>import gurobipy as gp</code> → <code>import coptpy as cp</code></li>
+<li><code>GRB</code> → <code>COPT</code></li>
+<li><code>gp.Model(...)</code> → <code>env = cp.Envr()</code> + <code>env.createModel(...)</code></li>
+<li><code>name=</code> → <code>nameprefix=</code> in <code>addVars</code> / <code>addConstrs</code></li>
+<li><code>m.optimize()</code> → <code>m.solve()</code></li>
+<li><code>m.getAttr("X", vars)</code> → <code>m.getInfo(COPT.Info.Value, vars)</code></li>
+<li><code>VarName</code>/<code>ConstrName</code> → <code>name</code></li>
+</ol>
+<p>Then check three more points:</p>
+<ol>
+<li>Replace every hard-coded status number (e.g. <code>== 2</code>) with a constant such as <code>COPT.OPTIMAL</code></li>
+<li><code>m.Params.X = v</code> → <code>m.Param.X = v</code> (singular <code>Param</code> instead of <code>Params</code>) or <code>m.setParam(COPT.Param.X, v)</code>, and check the parameter name (2.7)</li>
+<li>Other renamed attributes: <code>X</code> → <code>x</code>, <code>Pi</code> → <code>pi</code>, <code>RC</code> → <code>rc</code>, <code>NumVars</code>/<code>NumConstrs</code> → <code>cols</code>/<code>rows</code>, <code>Runtime</code> → <code>solvingtime</code>, <code>MIPGap</code> → <code>bestgap</code> (full list in 2.6)</li>
+</ol>
+<p>Most small and medium scripts run after these ten items. If the code uses callbacks, MIP starts (<code>x.Start</code>), <code>addRange</code>, hand-built <code>LinExpr</code> objects, or modifies the model after solving, continue with Chapters 2 and 3.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+        
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Home
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../chapter2/" class="md-footer__link md-footer__link--next" aria-label="Next: Chapter 2 · Core mapping tables">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Chapter 2 · Core mapping tables
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 redpanda997
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/redpanda997/gurobi-to-copt" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://guide.coap.online/copt/en-doc/" target="_blank" rel="noopener" title="COPT 文档" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

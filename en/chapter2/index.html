@@ -1,0 +1,2053 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A practical guide for moving Python models from Gurobi to the COPT solver">
+      
+      
+      
+        <link rel="canonical" href="https://redpanda997.github.io/gurobi-to-copt/en/chapter2/">
+      
+      
+        <link rel="prev" href="../chapter1/">
+      
+      
+      
+        
+          <link rel="alternate" href="../../chapter2/" hreflang="zh">
+        
+          <link rel="alternate" href="./" hreflang="en">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Chapter 2 · Core mapping tables - Migrating from Gurobi to COPT</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#chapter-2-core-mapping-tables" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../" title="Migrating from Gurobi to COPT" class="md-header__button md-logo" aria-label="Migrating from Gurobi to COPT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Migrating from Gurobi to COPT
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Chapter 2 · Core mapping tables
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../chapter2/" hreflang="zh" class="md-select__link">
+              中文
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/redpanda997/gurobi-to-copt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    redpanda997/gurobi-to-copt
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../" title="Migrating from Gurobi to COPT" class="md-nav__button md-logo" aria-label="Migrating from Gurobi to COPT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Migrating from Gurobi to COPT
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/redpanda997/gurobi-to-copt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    redpanda997/gurobi-to-copt
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chapter 1 · Up and running in ten minutes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chapter 2 · Core mapping tables
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chapter 2 · Core mapping tables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#21-environment-and-model-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Environment and model lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Constraints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-objective-and-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Objective and expressions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-solving-and-status-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Solving and status codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26-reading-results-attribute-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Reading results: attribute mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Constants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#29-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.9 File I/O
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210-not-covered-in-this-chapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.10 Not covered in this chapter
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#21-environment-and-model-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Environment and model lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#22-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#23-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Constraints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-objective-and-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Objective and expressions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-solving-and-status-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Solving and status codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26-reading-results-attribute-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Reading results: attribute mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Constants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#29-file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.9 File I/O
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210-not-covered-in-this-chapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.10 Not covered in this chapter
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/redpanda997/gurobi-to-copt/edit/main/docs/en/chapter2.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="chapter-2-core-mapping-tables">Chapter 2 — Core mapping tables<a class="headerlink" href="#chapter-2-core-mapping-tables" title="Permanent link">&para;</a></h1>
+<p>This chapter follows the modeling workflow: environment &amp; model → variables → constraints → objective &amp; expressions → solving &amp; status → reading results → parameters → constants → file I/O. Each section first shows the difference in a short piece of code, then gives the full mapping table; the tables stand on their own as a quick reference. The code snippets continue the conventions of Chapter 1: <code>gp</code>, <code>GRB</code>, <code>cp</code> and <code>COPT</code> are imported, <code>m</code> is the model, <code>x</code>, <code>y</code>, <code>z</code> are variables and <code>c</code> is a constraint.</p>
+<p>The following three rules summarize the main differences between the two APIs:</p>
+<ol>
+<li><strong>Method names are mostly the same.</strong> <code>addVar</code>, <code>addVars</code>, <code>addConstr</code>, <code>addConstrs</code>, <code>setObjective</code>, <code>getVars</code>, <code>getConstrs</code>, <code>computeIIS</code>, <code>write</code>, <code>read</code>, <code>remove</code>, <code>reset</code>, <code>tune</code> and many more share name and meaning on both sides. The main exception is <code>optimize()</code> → <code>solve()</code>.</li>
+<li><strong>Attributes can be accessed in original case or all lowercase, but some attribute names differ.</strong> The COPT documentation states that attribute names may be written in their original case (<code>m.ObjVal</code>) or in lowercase (<code>m.objval</code>), so attributes that share a name with Gurobi can stay. Attributes whose names differ must be edited; see 2.6.</li>
+<li><strong>Status codes have different numeric values.</strong> <code>GRB.OPTIMAL == 2</code> whereas <code>COPT.OPTIMAL == 1</code>. Code that compares against literal numbers instead of constants fails after migration.</li>
+</ol>
+<h2 id="21-environment-and-model-lifecycle">2.1 Environment and model lifecycle<a class="headerlink" href="#21-environment-and-model-lifecycle" title="Permanent link">&para;</a></h2>
+<p>A Gurobi model can be created directly; the environment object is optional. A COPT model is always created from an environment object:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">env</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">Env</span><span class="p">()</span>                     <span class="c1"># optional; Model() creates a default environment</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="s2">"demo"</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">env</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Envr</span><span class="p">()</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">m</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">createModel</span><span class="p">(</span><span class="s2">"demo"</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>With a floating or cluster license, COPT specifies the license server through <code>EnvrConfig</code> before the environment is created:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">cfg</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">EnvrConfig</span><span class="p">()</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">CLIENT_CLUSTER</span><span class="p">,</span> <span class="s2">"192.168.9.9"</span><span class="p">)</span>   <span class="c1"># COPT.CLIENT_FLOATING for a floating license</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">env</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Envr</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">m</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">createModel</span><span class="p">(</span><span class="s2">"demo"</span><span class="p">)</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Import</td>
+<td><code>import gurobipy as gp</code> <br> <code>from gurobipy import GRB</code></td>
+<td><code>import coptpy as cp</code> <br> <code>from coptpy import COPT</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Create environment</td>
+<td><code>env = gp.Env()</code> (optional — <code>Model()</code> creates a default environment implicitly)</td>
+<td><code>env = cp.Envr()</code></td>
+<td>COPT requires an explicit environment; models are created from it</td>
+</tr>
+<tr>
+<td>Create model</td>
+<td><code>m = gp.Model("name", env=env)</code></td>
+<td><code>m = env.createModel("name")</code></td>
+<td>Models are created from the environment</td>
+</tr>
+<tr>
+<td>Model from file</td>
+<td><code>m = gp.read("model.mps")</code></td>
+<td><code>m = env.createModel()</code> <br> <code>m.read("model.mps")</code></td>
+<td>COPT reads files through the model object</td>
+</tr>
+<tr>
+<td>Copy a model</td>
+<td><code>m2 = m.copy()</code></td>
+<td><code>m2 = m.clone()</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Release resources</td>
+<td><code>m.dispose()</code> / <code>env.dispose()</code> <br> or <code>with gp.Env() as env, gp.Model(env=env) as m:</code></td>
+<td>No explicit release needed; objects are freed automatically by Python's garbage collector</td>
+<td>COPT has no <code>dispose()</code> and the documentation defines no <code>with</code> usage; objects are released when they go out of scope. <code>env.close()</code> only disconnects from a floating / cluster license server</td>
+</tr>
+<tr>
+<td>Synchronize changes</td>
+<td><code>m.update()</code></td>
+<td>Not needed while modeling</td>
+<td>See note below</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">COPT does not need <code>update()</code></p>
+<p>Gurobi uses lazy updates: adding variables, changing bounds and removing items are queued until <code>m.update()</code>, <code>optimize()</code> or <code>write()</code> is called. The Gurobi documentation notes that a forgotten call does not raise an error; queries return the values from the last update. COPT's official examples have no such step: add variables and constraints, set parameters, then solve and query directly. coptpy provides <code>Model.update()</code>, defined in the documentation as "update the model, including numerical ranges, removed variables and constraints"; it is only needed to refresh coefficient statistics after removing items. During migration the <code>m.update()</code> calls can be deleted.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Parameters are set on the model only</p>
+<p>Gurobi parameters can be set on an <code>Env</code> or on a <code>Model</code>; a model copies the environment's parameters when it is created, and later changes to the environment do not affect that model. In COPT all solver parameters are set on the <code>Model</code>; <code>Envr</code> only manages the license and resources. To share one parameter set across several models, read a parameter file with <code>m.read("settings.par")</code> or set the parameters in a helper function.</p>
+</div>
+<h2 id="22-variables">2.2 Variables<a class="headerlink" href="#22-variables" title="Permanent link">&para;</a></h2>
+<p>Single variables are created the same way on both sides. For bulk creation, Gurobi's <code>name</code> argument is called <code>nameprefix</code> in COPT; for bulk attribute reads, Gurobi's <code>getAttr</code> corresponds to COPT's <code>getInfo</code>. Both accept a list or a <code>tupledict</code> and return a container of the same type:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">vtype</span><span class="o">=</span><span class="n">GRB</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">"X"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                 <span class="c1"># tupledict with the same keys as x</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addVars</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">vtype</span><span class="o">=</span><span class="n">COPT</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">nameprefix</span><span class="o">=</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">m</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getInfo</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Info</span><span class="o">.</span><span class="n">Value</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>     <span class="c1"># tupledict with the same keys as x</span>
+</span></code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single variable</td>
+<td><code>m.addVar(lb=0, ub=GRB.INFINITY, obj=0, vtype=GRB.CONTINUOUS, name="x")</code></td>
+<td><code>m.addVar(lb=0, ub=COPT.INFINITY, obj=0, vtype=COPT.CONTINUOUS, name="x")</code></td>
+<td>Identical signature</td>
+</tr>
+<tr>
+<td>Bulk variables</td>
+<td><code>m.addVars(I, J, vtype=GRB.BINARY, name="x")</code></td>
+<td><code>m.addVars(I, J, vtype=COPT.BINARY, nameprefix="x")</code></td>
+<td><code>name</code> → <code>nameprefix</code>; name format <code>x[i,j]</code> → <code>x(i,j)</code></td>
+</tr>
+<tr>
+<td>Matrix variable</td>
+<td><code>m.addMVar(shape, lb=..., ub=..., name=...)</code></td>
+<td><code>m.addMVar(shape, lb=..., ub=..., nameprefix=...)</code></td>
+<td>Chapter 4</td>
+</tr>
+<tr>
+<td>Look up by name</td>
+<td><code>m.getVarByName("x")</code></td>
+<td><code>m.getVarByName("x")</code></td>
+<td></td>
+</tr>
+<tr>
+<td>All variables</td>
+<td><code>m.getVars()</code> (returns a list)</td>
+<td><code>m.getVars()</code> (returns a <code>VarArray</code>, iterable with a plain for loop; <code>.getAll()</code> converts to a list, <code>.getSize()</code> gives the count)</td>
+<td></td>
+</tr>
+<tr>
+<td>Number of variables</td>
+<td><code>m.NumVars</code></td>
+<td><code>m.cols</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Delete a variable</td>
+<td><code>m.remove(x)</code></td>
+<td><code>m.remove(x)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Change type</td>
+<td><code>x.VType = GRB.INTEGER</code></td>
+<td><code>x.vtype = COPT.INTEGER</code> or <code>m.setVarType(x, COPT.INTEGER)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Change bounds</td>
+<td><code>x.LB = 0; x.UB = 5</code></td>
+<td><code>x.LB = 0; x.UB = 5</code></td>
+<td>Same name</td>
+</tr>
+<tr>
+<td>Bulk read / write attributes</td>
+<td><code>m.getAttr("LB", vars)</code> / <code>m.setAttr("LB", vars, vals)</code></td>
+<td><code>m.getInfo(COPT.Info.LB, vars)</code> / <code>m.setInfo(COPT.Info.LB, vars, vals)</code></td>
+<td>Gurobi uses attribute-name strings; COPT uses <code>COPT.Info.*</code> constants</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bounds and infinity</strong>: <code>GRB.INFINITY</code> is <code>1e100</code>, <code>COPT.INFINITY</code> is <code>1e30</code>. According to the COPT documentation, a bound is treated as infinite once its absolute value reaches <code>1e30</code>, so a <code>1e100</code> left in old code is also recognized as unbounded by COPT. The reverse does not hold: a <code>1e30</code> read from COPT is a finite value to Gurobi. Use the <code>COPT.INFINITY</code> constant throughout.</p>
+<p><strong>The variable <code>tupledict</code></strong>: <code>addVars</code> returns a <code>tupledict</code> on both sides, supporting <code>.sum(...)</code>, <code>.prod(coeff_dict)</code> and the usual dict methods with the same behavior.</p>
+<h2 id="23-constraints">2.3 Constraints<a class="headerlink" href="#23-constraints" title="Permanent link">&para;</a></h2>
+<p>Constraints written with comparison operators, and bulk creation with <code>addConstrs</code> and a generator, are the same on both sides. The differences are in the internal representation of range constraints and in the attributes used to read the right-hand side.</p>
+<p>A range constraint <code>lb ≤ expr ≤ ub</code> can be written as <code>expr == [lb, ub]</code> on both sides, and both have a dedicated method:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">m</span><span class="o">.</span><span class="n">addRange</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r1"</span><span class="p">)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r2"</span><span class="p">)</span>   <span class="c1"># equivalent to the line above</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">m</span><span class="o">.</span><span class="n">addBoundConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r1"</span><span class="p">)</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"r2"</span><span class="p">)</span>   <span class="c1"># equivalent to the line above</span>
+</span></code></pre></div>
+</div>
+<p>Gurobi stores a range constraint as an equality with an auxiliary variable, so the variable count of the model increases by one; COPT stores it directly as <code>lb ≤ expr ≤ ub</code> without adding a variable.</p>
+<p>To read the right-hand side of a constraint, Gurobi uses <code>Sense</code> and <code>RHS</code>, COPT uses <code>lb</code> and <code>ub</code>:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"c"</span><span class="p">)</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">m</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">Sense</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">RHS</span><span class="p">)</span>                     <span class="c1"># &lt; 10.0</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">addConstr</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"c"</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">lb</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">ub</span><span class="p">)</span>                         <span class="c1"># -1e+30 10.0</span>
+</span></code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linear constraint (expression form)</td>
+<td><code>m.addConstr(x + y &lt;= 10, name="c")</code></td>
+<td><code>m.addConstr(x + y &lt;= 10, name="c")</code></td>
+<td>Identical</td>
+</tr>
+<tr>
+<td>Linear constraint (explicit form)</td>
+<td><code>m.addLConstr(x + y, GRB.LESS_EQUAL, 10, name="c")</code></td>
+<td><code>m.addConstr(x + y, COPT.LESS_EQUAL, 10, name="c")</code></td>
+<td>COPT's <code>addConstr</code> accepts both forms</td>
+</tr>
+<tr>
+<td>Bulk constraints</td>
+<td><code>m.addConstrs((expr_i &lt;= b_i for i in I), name="c")</code></td>
+<td><code>m.addConstrs((expr_i &lt;= b_i for i in I), nameprefix="c")</code></td>
+<td><code>name</code> → <code>nameprefix</code></td>
+</tr>
+<tr>
+<td>Range constraint</td>
+<td><code>m.addRange(expr, lb, ub, name="r")</code></td>
+<td><code>m.addBoundConstr(expr, lb, ub, name="r")</code></td>
+<td>See the "two-sided" note below</td>
+</tr>
+<tr>
+<td>Quadratic constraint</td>
+<td><code>m.addQConstr(...)</code></td>
+<td><code>m.addQConstr(...)</code></td>
+<td>Identical</td>
+</tr>
+<tr>
+<td>SOS constraint</td>
+<td><code>m.addSOS(GRB.SOS_TYPE1, vars, weights)</code></td>
+<td><code>m.addSOS(COPT.SOS_TYPE1, vars, weights)</code></td>
+<td>Identical</td>
+</tr>
+<tr>
+<td>Indicator constraint</td>
+<td><code>m.addGenConstrIndicator(z, True, x + y &lt;= 5)</code></td>
+<td><code>m.addGenConstrIndicator(z, True, x + y &lt;= 5)</code></td>
+<td>Identical (COPT has an extra optional <code>type</code> argument, default if-then)</td>
+</tr>
+<tr>
+<td>Other general constraints</td>
+<td><code>addGenConstrAbs / Max / Min / And / Or / PWL</code></td>
+<td>Same names</td>
+<td>Identical</td>
+</tr>
+<tr>
+<td>Nonlinear constraint</td>
+<td><code>m.addGenConstrNL(...)</code> with <code>nlfunc</code></td>
+<td><code>m.addNlConstr(...)</code> with <code>cp.nl</code></td>
+<td>Chapter 4</td>
+</tr>
+<tr>
+<td>Matrix constraint</td>
+<td><code>m.addMConstr(A, x, sense, b)</code></td>
+<td><code>m.addMConstr(A, x, sense, b)</code></td>
+<td>Chapter 4</td>
+</tr>
+<tr>
+<td>Look up by name</td>
+<td><code>m.getConstrByName("c")</code></td>
+<td><code>m.getConstrByName("c")</code></td>
+<td></td>
+</tr>
+<tr>
+<td>All constraints</td>
+<td><code>m.getConstrs()</code></td>
+<td><code>m.getConstrs()</code> (returns a <code>ConstrArray</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td>Number of constraints</td>
+<td><code>m.NumConstrs</code></td>
+<td><code>m.rows</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Delete a constraint</td>
+<td><code>m.remove(c)</code></td>
+<td><code>m.remove(c)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Change a coefficient</td>
+<td><code>m.chgCoeff(c, x, 2.0)</code></td>
+<td><code>m.setCoeff(c, x, 2.0)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Read coefficient / row / column</td>
+<td><code>m.getCoeff(c, x)</code> / <code>m.getRow(c)</code> / <code>m.getCol(x)</code></td>
+<td>Same names</td>
+<td></td>
+</tr>
+<tr>
+<td>Read the coefficient matrix</td>
+<td><code>m.getA()</code></td>
+<td><code>m.getA()</code></td>
+<td>Both return a SciPy sparse matrix</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">COPT constraints are two-sided</p>
+<p>A Gurobi linear constraint is described by a <code>Sense</code> (<code>&lt;</code>/<code>&gt;</code>/<code>=</code>) and an <code>RHS</code>; range constraints require <code>addRange</code>, which Gurobi implements internally by adding an auxiliary variable. COPT represents every linear constraint as <code>lb ≤ expr ≤ ub</code>, described by <code>c.lb</code> and <code>c.ub</code>: <code>x + y &lt;= 10</code> is stored as <code>lb = -COPT.INFINITY, ub = 10</code>; <code>x + y &gt;= 1</code> as <code>lb = 1, ub = +COPT.INFINITY</code>; <code>x + y == 3</code> as <code>lb = ub = 3</code>. A range constraint is written directly with <code>addBoundConstr</code>, without an auxiliary variable; <code>lb</code> and <code>ub</code> can be changed separately after solving. The corresponding edits during migration:</p>
+<ul>
+<li>Code that reads <code>c.RHS</code> reads <code>c.ub</code> (for ≤) or <code>c.lb</code> (for ≥) instead;</li>
+<li>Code that changes a right-hand side after solving assigns to <code>c.lb</code> / <code>c.ub</code>;</li>
+<li><code>addRange</code> becomes <code>addBoundConstr</code>.</li>
+</ul>
+</div>
+<h2 id="24-objective-and-expressions">2.4 Objective and expressions<a class="headerlink" href="#24-objective-and-expressions" title="Permanent link">&para;</a></h2>
+<p><code>setObjective</code> is used the same way, and expressions built with operators and <code>quicksum</code> need no changes. When terms are added to a <code>LinExpr</code> by method calls, the argument order differs: Gurobi's <code>addTerms</code> takes the coefficient first, then the variable; COPT's <code>addTerm</code>/<code>addTerms</code> take the variable first, then the coefficient:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">LinExpr</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>                    <span class="c1"># constant term 1.0</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerms</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                     <span class="c1"># coefficient first, variable second</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerms</span><span class="p">([</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">])</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">GRB</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">expr</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">LinExpr</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>                      <span class="c1"># variable first, coefficient second</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">expr</span><span class="o">.</span><span class="n">addTerms</span><span class="p">([</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">])</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">m</span><span class="o">.</span><span class="n">setObjective</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">COPT</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set the objective</td>
+<td><code>m.setObjective(expr, GRB.MAXIMIZE)</code></td>
+<td><code>m.setObjective(expr, COPT.MAXIMIZE)</code></td>
+<td>Identical</td>
+</tr>
+<tr>
+<td><strong>Change only the sense</strong></td>
+<td><strong><code>m.ModelSense = GRB.MINIMIZE</code></strong></td>
+<td><strong><code>m.ObjSense = COPT.MINIMIZE</code></strong> or <code>m.setObjSense(COPT.MINIMIZE)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Objective constant</strong></td>
+<td><strong><code>m.ObjCon = 5</code></strong></td>
+<td><strong><code>m.ObjConst = 5</code></strong> or <code>m.setObjConst(5)</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Read the objective expression</td>
+<td><code>m.getObjective()</code></td>
+<td><code>m.getObjective()</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Objective coefficient of a variable</td>
+<td><code>x.Obj</code></td>
+<td><code>x.Obj</code></td>
+<td>Same name</td>
+</tr>
+<tr>
+<td>Multiple objectives</td>
+<td><code>m.setObjectiveN(expr, index, priority, weight, ...)</code></td>
+<td><code>m.setObjectiveN(index, expr, sense, priority, weight, ...)</code></td>
+<td><strong>Different argument order</strong>, Chapter 4</td>
+</tr>
+<tr>
+<td>Matrix-form objective</td>
+<td><code>m.setMObjective(...)</code></td>
+<td><code>m.setMObjective(...)</code></td>
+<td>Chapter 4</td>
+</tr>
+<tr>
+<td>Add terms to a linear expression</td>
+<td><code>expr.addTerms(coeffs, vars)</code></td>
+<td><code>expr.addTerm(var, coeff)</code> / <code>expr.addTerms(vars, coeffs)</code></td>
+<td><strong>Reversed argument order</strong>, see above</td>
+</tr>
+<tr>
+<td>Constant term of an expression</td>
+<td><code>gp.LinExpr(1.0)</code> / <code>expr.getConstant()</code></td>
+<td><code>cp.LinExpr(1.0)</code> / <code>expr.getConstant()</code></td>
+<td>Identical</td>
+</tr>
+</tbody>
+</table>
+<h2 id="25-solving-and-status-codes">2.5 Solving and status codes<a class="headerlink" href="#25-solving-and-status-codes" title="Permanent link">&para;</a></h2>
+<p>The solve method has a different name (<code>optimize()</code> vs <code>solve()</code>), the status constants share names but not values, and the attribute that tells whether a usable solution exists differs:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Gurobi</th>
+<th>COPT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solve</td>
+<td><code>m.optimize()</code></td>
+<td><code>m.solve()</code></td>
+</tr>
+<tr>
+<td>Solve the LP relaxation / an LP only</td>
+<td><code>m.relax().optimize()</code></td>
+<td><code>m.solveLP()</code> (ignores integrality and solves the LP)</td>
+</tr>
+<tr>
+<td>Interrupt</td>
+<td><code>m.terminate()</code></td>
+<td><code>m.interrupt()</code></td>
+</tr>
+<tr>
+<td>Clear the solution</td>
+<td><code>m.reset()</code> / <code>m.reset(1)</code></td>
+<td><code>m.reset()</code> / <code>m.resetAll()</code> (the latter also clears additional information such as MIP starts and the IIS)</td>
+</tr>
+<tr>
+<td>Read the status</td>
+<td><code>m.Status</code></td>
+<td><code>m.Status</code></td>
+</tr>
+<tr>
+<td>Is a solution available?</td>
+<td><code>m.SolCount &gt; 0</code></td>
+<td><code>m.HasSol</code> (the older <code>HasMipSol</code> / <code>HasLpSol</code> are marked deprecated in the 8.0 documentation)</td>
+</tr>
+</tbody>
+</table>
+<p>Status code mapping. Use constants on both sides; do not write the numeric values:</p>
+<table>
+<thead>
+<tr>
+<th>Meaning</th>
+<th>Gurobi constant (value)</th>
+<th>COPT constant (value)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Not yet solved</td>
+<td><code>GRB.LOADED</code> (1)</td>
+<td><code>COPT.UNSTARTED</code> (0)</td>
+<td></td>
+</tr>
+<tr>
+<td>Optimal</td>
+<td><code>GRB.OPTIMAL</code> (2)</td>
+<td><code>COPT.OPTIMAL</code> (1)</td>
+<td></td>
+</tr>
+<tr>
+<td>Infeasible</td>
+<td><code>GRB.INFEASIBLE</code> (3)</td>
+<td><code>COPT.INFEASIBLE</code> (2)</td>
+<td></td>
+</tr>
+<tr>
+<td>Infeasible or unbounded</td>
+<td><code>GRB.INF_OR_UNBD</code> (4)</td>
+<td><code>COPT.INF_OR_UNB</code> (4)</td>
+<td></td>
+</tr>
+<tr>
+<td>Unbounded</td>
+<td><code>GRB.UNBOUNDED</code> (5)</td>
+<td><code>COPT.UNBOUNDED</code> (3)</td>
+<td></td>
+</tr>
+<tr>
+<td>Numerical trouble</td>
+<td><code>GRB.NUMERIC</code> (12)</td>
+<td><code>COPT.NUMERICAL</code> (5)</td>
+<td></td>
+</tr>
+<tr>
+<td>Node limit reached</td>
+<td><code>GRB.NODE_LIMIT</code> (8)</td>
+<td><code>COPT.NODELIMIT</code> (6)</td>
+<td></td>
+</tr>
+<tr>
+<td>Time limit reached</td>
+<td><code>GRB.TIME_LIMIT</code> (9)</td>
+<td><code>COPT.TIMEOUT</code> (8)</td>
+<td></td>
+</tr>
+<tr>
+<td>Iteration limit reached</td>
+<td><code>GRB.ITERATION_LIMIT</code> (7)</td>
+<td><code>COPT.ITERLIMIT</code> (11)</td>
+<td></td>
+</tr>
+<tr>
+<td>Interrupted by user</td>
+<td><code>GRB.INTERRUPTED</code> (11)</td>
+<td><code>COPT.INTERRUPTED</code> (10)</td>
+<td></td>
+</tr>
+<tr>
+<td>Solution not to required accuracy</td>
+<td><code>GRB.SUBOPTIMAL</code> (13)</td>
+<td><code>COPT.IMPRECISE</code> (7)</td>
+<td>Similar meaning: a solution is returned but tolerances were not met</td>
+</tr>
+<tr>
+<td>Unfinished due to internal error</td>
+<td>None</td>
+<td><code>COPT.UNFINISHED</code> (9)</td>
+<td></td>
+</tr>
+<tr>
+<td>Local optimum / local infeasibility of a nonconvex or nonlinear problem</td>
+<td><code>GRB.LOCALLY_OPTIMAL</code> (18) / <code>GRB.LOCALLY_INFEASIBLE</code> (19)</td>
+<td><code>COPT.LOCAL_OPTIMAL</code> (20) / <code>COPT.LOCAL_INFEASIBLE</code> (21)</td>
+<td>New in Gurobi 13; Chapter 4</td>
+</tr>
+</tbody>
+</table>
+<p>A common pattern: the time limit is reached but a feasible solution exists, so the solution is used:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">m</span><span class="o">.</span><span class="n">Params</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">m</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">Status</span> <span class="o">==</span> <span class="n">GRB</span><span class="o">.</span><span class="n">OPTIMAL</span> <span class="ow">or</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Status</span> <span class="o">==</span> <span class="n">GRB</span><span class="o">.</span><span class="n">TIME_LIMIT</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">SolCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">use</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">ObjVal</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">MIPGap</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">TimeLimit</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">m</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">COPT</span><span class="o">.</span><span class="n">OPTIMAL</span> <span class="ow">or</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">COPT</span><span class="o">.</span><span class="n">TIMEOUT</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">hassol</span><span class="p">):</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">use</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">objval</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">bestgap</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<h2 id="26-reading-results-attribute-mapping">2.6 Reading results: attribute mapping<a class="headerlink" href="#26-reading-results-attribute-mapping" title="Permanent link">&para;</a></h2>
+<p>Results of a single variable or constraint are read as attributes; bulk reads go through model methods. Gurobi's <code>getAttr</code> corresponds to COPT's <code>getInfo</code>, and COPT also has argument-free shortcuts such as <code>getValues</code> and <code>getDuals</code>:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">Pi</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">ObjVal</span><span class="p">)</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">"X"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">getVars</span><span class="p">())</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">duals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">"Pi"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">getConstrs</span><span class="p">())</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">objval</span><span class="p">)</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">vals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getValues</span><span class="p">()</span>        <span class="c1"># or m.getInfo(COPT.Info.Value, m.getVars())</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">duals</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getDuals</span><span class="p">()</span>        <span class="c1"># or m.getInfo(COPT.Info.Dual, m.getConstrs())</span>
+</span></code></pre></div>
+</div>
+<p>MIP starts are given differently. Gurobi assigns the <code>Start</code> attribute of each variable; COPT sets them with <code>setMipStart</code> and loads them once with <code>loadMipStart</code>:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">x</span><span class="o">.</span><span class="n">Start</span> <span class="o">=</span> <span class="mf">1.0</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">y</span><span class="o">.</span><span class="n">Start</span> <span class="o">=</span> <span class="mf">0.0</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">m</span><span class="o">.</span><span class="n">setMipStart</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">m</span><span class="o">.</span><span class="n">loadMipStart</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p>The COPT column lists attribute names in the original case used by the COPT documentation (model attributes such as <code>ObjVal</code> and <code>BestGap</code>, variable / constraint information items such as <code>Value</code>, <code>RedCost</code> and <code>Dual</code>). Per the COPT documentation these names can also be accessed in all lowercase (<code>m.objval</code>, <code>x.value</code>); <code>x.x</code>, <code>x.rc</code>, <code>c.pi</code> and <code>name</code>, <code>vtype</code>, <code>basis</code>, <code>index</code> are additional shorthand attributes from the documentation that exist only in lowercase. <strong>Bold</strong> rows are attributes whose names actually differ and must be edited; the other rows share the same name on both sides, so the Gurobi spelling can stay.</p>
+<p><strong>Variable attributes</strong></p>
+<table>
+<thead>
+<tr>
+<th>Meaning</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Solution value</strong></td>
+<td><strong><code>x.X</code></strong></td>
+<td><strong><code>x.Value</code></strong> (shorthand <code>x.x</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Name</strong></td>
+<td><strong><code>x.VarName</code></strong></td>
+<td><strong><code>x.name</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Lower / upper bound</td>
+<td><code>x.LB</code> / <code>x.UB</code></td>
+<td><code>x.LB</code> / <code>x.UB</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Objective coefficient</td>
+<td><code>x.Obj</code></td>
+<td><code>x.Obj</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Type</strong></td>
+<td><strong><code>x.VType</code></strong></td>
+<td><strong><code>x.vtype</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Reduced cost (LP)</strong></td>
+<td><strong><code>x.RC</code></strong></td>
+<td><strong><code>x.RedCost</code></strong> (shorthand <code>x.rc</code>)</td>
+<td>Available for LPs or when an LP solution exists</td>
+</tr>
+<tr>
+<td><strong>Basis status</strong></td>
+<td><strong><code>x.VBasis</code></strong></td>
+<td><strong><code>x.basis</code></strong></td>
+<td>Different encoding (see 2.8)</td>
+</tr>
+<tr>
+<td><strong>MIP start</strong></td>
+<td><strong><code>x.Start = v</code></strong></td>
+<td><strong><code>m.setMipStart(x, v)</code> + <code>m.loadMipStart()</code></strong></td>
+<td>Chapter 3</td>
+</tr>
+<tr>
+<td><strong>k-th solution from the pool</strong></td>
+<td><strong><code>m.Params.SolutionNumber = k; x.PoolNX</code></strong></td>
+<td><strong><code>m.getPoolSolution(k, vars)</code></strong></td>
+<td><code>Xn</code> is deprecated since Gurobi 13 in favor of <code>PoolNX</code>; Chapter 4</td>
+</tr>
+<tr>
+<td>Sensitivity analysis</td>
+<td><code>x.SAObjLow/Up</code>, <code>x.SALBLow/Up</code>, <code>x.SAUBLow/Up</code></td>
+<td><code>x.SAObjLow/Up</code>, <code>x.SALBLow/Up</code>, <code>x.SAUBLow/Up</code></td>
+<td>Same names; not computed by default in COPT, set <code>ReqSensitivity = 1</code> to enable</td>
+</tr>
+<tr>
+<td><strong>Unbounded ray</strong></td>
+<td><strong><code>x.UnbdRay</code></strong></td>
+<td><strong><code>x.PrimalRay</code></strong></td>
+<td>Must be enabled on both sides: Gurobi <code>InfUnbdInfo = 1</code>, COPT <code>ReqFarkasRay = 1</code></td>
+</tr>
+<tr>
+<td><strong>IIS membership</strong></td>
+<td><strong><code>x.IISLB</code> / <code>x.IISUB</code></strong></td>
+<td><strong><code>x.getLowerIIS()</code> / <code>x.getUpperIIS()</code></strong></td>
+<td>After <code>computeIIS()</code></td>
+</tr>
+<tr>
+<td>Index</td>
+<td><code>x.index</code></td>
+<td><code>x.index</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Constraint attributes</strong></p>
+<table>
+<thead>
+<tr>
+<th>Meaning</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Name</strong></td>
+<td><strong><code>c.ConstrName</code></strong></td>
+<td><strong><code>c.name</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Right-hand side / sense</strong></td>
+<td><strong><code>c.RHS</code> / <code>c.Sense</code></strong></td>
+<td><strong><code>c.LB</code> / <code>c.UB</code></strong></td>
+<td>Two-sided representation, see 2.3</td>
+</tr>
+<tr>
+<td><strong>Dual value (shadow price)</strong></td>
+<td><strong><code>c.Pi</code></strong></td>
+<td><strong><code>c.Dual</code></strong> (shorthand <code>c.pi</code>)</td>
+<td>Available for LPs or when an LP solution exists</td>
+</tr>
+<tr>
+<td>Slack</td>
+<td><code>c.Slack</code></td>
+<td><code>c.Slack</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Basis status</strong></td>
+<td><strong><code>c.CBasis</code></strong></td>
+<td><strong><code>c.basis</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Farkas dual</strong></td>
+<td><strong><code>c.FarkasDual</code></strong></td>
+<td><strong><code>c.DualFarkas</code></strong></td>
+<td>Must be enabled on both sides: Gurobi <code>InfUnbdInfo = 1</code>, COPT <code>ReqFarkasRay = 1</code></td>
+</tr>
+<tr>
+<td><strong>IIS membership</strong></td>
+<td><strong><code>c.IISConstr</code></strong></td>
+<td><strong><code>c.getLowerIIS()</code> / <code>c.getUpperIIS()</code></strong></td>
+<td>COPT distinguishes whether the lower or the upper bound is in the IIS</td>
+</tr>
+<tr>
+<td>Index</td>
+<td><code>c.index</code></td>
+<td><code>c.index</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Model attributes</strong></p>
+<table>
+<thead>
+<tr>
+<th>Meaning</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solve status</td>
+<td><code>m.Status</code></td>
+<td><code>m.Status</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Objective value</td>
+<td><code>m.ObjVal</code></td>
+<td><code>m.ObjVal</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Objective bound</td>
+<td><code>m.ObjBound</code></td>
+<td><code>m.ObjBound</code></td>
+<td>The older <code>BestBnd</code> is marked deprecated in the 8.0 documentation</td>
+</tr>
+<tr>
+<td><strong>Relative gap</strong></td>
+<td><strong><code>m.MIPGap</code></strong></td>
+<td><strong><code>m.BestGap</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Solve time</strong></td>
+<td><strong><code>m.Runtime</code></strong></td>
+<td><strong><code>m.SolvingTime</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Node count</strong></td>
+<td><strong><code>m.NodeCount</code></strong></td>
+<td><strong><code>m.NodeCnt</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Simplex iterations</strong></td>
+<td><strong><code>m.IterCount</code></strong></td>
+<td><strong><code>m.SimplexIter</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Barrier iterations</strong></td>
+<td><strong><code>m.BarIterCount</code></strong></td>
+<td><strong><code>m.BarrierIter</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Number of pool solutions</strong></td>
+<td><strong><code>m.SolCount</code></strong></td>
+<td><strong><code>m.PoolSols</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Number of variables / constraints / nonzeros</strong></td>
+<td><strong><code>m.NumVars</code> / <code>m.NumConstrs</code> / <code>m.NumNZs</code></strong></td>
+<td><strong><code>m.Cols</code> / <code>m.Rows</code> / <code>m.Elems</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Number of integer / binary variables</strong></td>
+<td><strong><code>m.NumIntVars</code> / <code>m.NumBinVars</code></strong></td>
+<td><strong><code>m.Ints</code> / <code>m.Bins</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Number of quadratic constraints / SOS</strong></td>
+<td><strong><code>m.NumQConstrs</code> / <code>m.NumSOS</code></strong></td>
+<td><strong><code>m.QConstrs</code> / <code>m.Soss</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Is a MIP</td>
+<td><code>m.IsMIP</code></td>
+<td><code>m.IsMIP</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Has a quadratic objective</strong></td>
+<td><strong><code>m.IsQP</code></strong></td>
+<td><strong><code>m.HasQObj</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Objective sense / constant</strong></td>
+<td><strong><code>m.ModelSense</code> / <code>m.ObjCon</code></strong></td>
+<td><strong><code>m.ObjSense</code> / <code>m.ObjConst</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Solution available</strong></td>
+<td><strong><code>m.SolCount &gt; 0</code></strong></td>
+<td><strong><code>m.HasSol</code></strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Coefficient ranges</strong></td>
+<td><strong><code>m.MaxCoeff/MinCoeff</code>, <code>m.MaxRHS/MinRHS</code>, <code>m.MaxObjCoeff/MinObjCoeff</code></strong></td>
+<td><strong><code>m.MaxElem/MinElem</code>, <code>m.MaxRHS/MinRHS</code>, <code>m.MaxCost/MinCost</code></strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bulk reads</strong></p>
+<table>
+<thead>
+<tr>
+<th>Gurobi</th>
+<th>COPT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>m.getAttr("X", m.getVars())</code></td>
+<td><code>m.getValues()</code> or <code>m.getInfo(COPT.Info.Value, vars)</code></td>
+</tr>
+<tr>
+<td><code>m.getAttr("Pi", m.getConstrs())</code></td>
+<td><code>m.getDuals()</code> or <code>m.getInfo(COPT.Info.Dual, constrs)</code></td>
+</tr>
+<tr>
+<td><code>m.getAttr("RC", m.getVars())</code></td>
+<td><code>m.getRedcosts()</code> or <code>m.getInfo(COPT.Info.RedCost, vars)</code></td>
+</tr>
+<tr>
+<td><code>m.getAttr("Slack", m.getConstrs())</code></td>
+<td><code>m.getSlacks()</code> or <code>m.getInfo(COPT.Info.Slack, constrs)</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td><code>m.getLpSolution()</code>: returns <code>(values, slacks, duals, redcosts)</code> in one call</td>
+</tr>
+</tbody>
+</table>
+<h2 id="27-parameters">2.7 Parameters<a class="headerlink" href="#27-parameters" title="Permanent link">&para;</a></h2>
+<p>Most parameter names are the same. Both sides support attribute style, constant style and string style:</p>
+<div class="grid side-by-side">
+<div class="language-python highlight"><span class="filename">Gurobi</span><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">m</span><span class="o">.</span><span class="n">Params</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">GRB</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">MIPGap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">"Threads"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-python highlight"><span class="filename">COPT</span><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">m</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">TimeLimit</span> <span class="o">=</span> <span class="mi">60</span>                <span class="c1"># m.param.timelimit = 60 also works</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="n">COPT</span><span class="o">.</span><span class="n">Param</span><span class="o">.</span><span class="n">RelGap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>   <span class="c1"># MIPGap is called RelGap in COPT</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">m</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">"Threads"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>How to set them</strong></p>
+<table>
+<thead>
+<tr>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>m.Params.TimeLimit = 60</code></td>
+<td><code>m.Param.TimeLimit = 60</code></td>
+<td>Attribute style (<code>Params</code> in Gurobi, <code>Param</code> in COPT; the COPT team's comparison table writes <code>m.param.timelimit</code>, which also works)</td>
+</tr>
+<tr>
+<td><code>m.setParam(GRB.Param.TimeLimit, 60)</code></td>
+<td><code>m.setParam(COPT.Param.TimeLimit, 60)</code></td>
+<td>Constant style — the form recommended by both documentations</td>
+</tr>
+<tr>
+<td><code>m.setParam("TimeLimit", 60)</code></td>
+<td><code>m.setParam("TimeLimit", 60)</code></td>
+<td>Identical on both sides. Explicitly documented for Gurobi; observed for COPT (the constant <code>COPT.Param.TimeLimit</code> evaluates to the string <code>"TimeLimit"</code>)</td>
+</tr>
+<tr>
+<td><code>m.Params.TimeLimit</code> (read)</td>
+<td><code>m.Param.TimeLimit</code> or <code>m.getParam(COPT.Param.TimeLimit)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>m.getParamInfo("TimeLimit")</code></td>
+<td><code>m.getParamInfo(COPT.Param.TimeLimit)</code></td>
+<td>Same name, different tuple layout: Gurobi returns (name, type, current, min, max, default); COPT returns (name, current, default, min, max) (per the coptpy method docstring)</td>
+</tr>
+<tr>
+<td><code>m.resetParams()</code></td>
+<td><code>m.resetParam()</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>m.read("x.prm")</code> / <code>m.write("x.prm")</code></td>
+<td><code>m.read("x.par")</code> / <code>m.write("x.par")</code></td>
+<td>Different file extension</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Common parameters</strong></p>
+<p>The "Semantics" column states whether the values and their meaning coincide. Parameters marked "differ" cannot be copied over by value.</p>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time limit (seconds)</td>
+<td><code>TimeLimit</code></td>
+<td><code>TimeLimit</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Time limit after a feasible solution is found</td>
+<td>None</td>
+<td><code>SolTimeLimit</code></td>
+<td>COPT only</td>
+</tr>
+<tr>
+<td>Relative MIP gap</td>
+<td><code>MIPGap</code> (default 1e-4)</td>
+<td><code>RelGap</code> (default 1e-4)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Absolute MIP gap</td>
+<td><code>MIPGapAbs</code> (default 1e-10)</td>
+<td><code>AbsGap</code> (default 1e-6)</td>
+<td>Same meaning, <strong>different default</strong></td>
+</tr>
+<tr>
+<td>Primal feasibility tolerance</td>
+<td><code>FeasibilityTol</code> (1e-6)</td>
+<td><code>FeasTol</code> (1e-6)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Dual feasibility tolerance</td>
+<td><code>OptimalityTol</code> (1e-6)</td>
+<td><code>DualTol</code> (1e-6)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Integrality tolerance</td>
+<td><code>IntFeasTol</code> (1e-5)</td>
+<td><code>IntTol</code> (1e-6)</td>
+<td>Same meaning, <strong>different default</strong></td>
+</tr>
+<tr>
+<td>Threads</td>
+<td><code>Threads</code> (0 = automatic)</td>
+<td><code>Threads</code> (-1 = automatic)</td>
+<td>Different value for "automatic"</td>
+</tr>
+<tr>
+<td>LP algorithm</td>
+<td><code>Method</code></td>
+<td><code>LpMethod</code></td>
+<td><strong>Values differ</strong>: Gurobi 0 primal simplex / 1 dual simplex / 2 barrier / 3 concurrent / 4 deterministic concurrent / 6 PDHG (first-order method, new in 13.0); COPT 1 dual simplex / 2 barrier / 3 crossover / 4 concurrent / 5 automatic choice / 6 first-order method (PDLP). -1 is automatic on both</td>
+</tr>
+<tr>
+<td>Crossover</td>
+<td><code>Crossover</code></td>
+<td><code>Crossover</code></td>
+<td>Same meaning, different value range</td>
+</tr>
+<tr>
+<td>Presolve</td>
+<td><code>Presolve</code> (-1/0/1/2)</td>
+<td><code>Presolve</code> (-1/0/1/2/3/4)</td>
+<td>COPT has two more aggressive levels</td>
+</tr>
+<tr>
+<td>Scaling</td>
+<td><code>ScaleFlag</code></td>
+<td><code>Scaling</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Cut aggressiveness</td>
+<td><code>Cuts</code></td>
+<td><code>CutLevel</code> (-1/0/1/2/3)</td>
+<td>Similar</td>
+</tr>
+<tr>
+<td>Heuristic effort</td>
+<td><code>Heuristics</code> (fraction of time, 0–1)</td>
+<td><code>HeurLevel</code> (level -1/0/1/2/3)</td>
+<td><strong>Semantics differ</strong></td>
+</tr>
+<tr>
+<td>Node limit</td>
+<td><code>NodeLimit</code></td>
+<td><code>NodeLimit</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Barrier iteration limit</td>
+<td><code>BarIterLimit</code></td>
+<td><code>BarIterLimit</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Memory limit</td>
+<td><code>MemLimit</code> / <code>SoftMemLimit</code></td>
+<td><code>MemLimit</code></td>
+<td><strong>Different units</strong>: Gurobi in GB, COPT in MB</td>
+</tr>
+<tr>
+<td>Lazy constraints switch</td>
+<td><code>LazyConstraints</code></td>
+<td><code>LazyConstraints</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Nonconvex handling</td>
+<td><code>NonConvex</code></td>
+<td><code>NonConvex</code></td>
+<td>Similar meaning, different values (Chapter 4)</td>
+</tr>
+<tr>
+<td>IIS algorithm</td>
+<td><code>IISMethod</code></td>
+<td><code>IISMethod</code></td>
+<td>Values differ</td>
+</tr>
+<tr>
+<td>Logging switch</td>
+<td><code>OutputFlag</code></td>
+<td><code>Logging</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Log to console</td>
+<td><code>LogToConsole</code></td>
+<td><code>LogToConsole</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Log file</td>
+<td><code>LogFile</code></td>
+<td>No parameter; use <code>m.setLogFile("x.log")</code></td>
+<td></td>
+</tr>
+<tr>
+<td>MIP start handling</td>
+<td><code>StartNodeLimit</code></td>
+<td><code>MipStartMode</code> / <code>MipStartNodeLimit</code></td>
+<td>Chapter 3</td>
+</tr>
+<tr>
+<td>Tuner time limit</td>
+<td><code>TuneTimeLimit</code></td>
+<td><code>TuneTimeLimit</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Sensitivity analysis</td>
+<td>Always available</td>
+<td><code>ReqSensitivity = 1</code></td>
+<td>Off by default in COPT; enable when needed</td>
+</tr>
+<tr>
+<td>Farkas certificate / unbounded ray</td>
+<td><code>InfUnbdInfo = 1</code></td>
+<td><code>ReqFarkasRay = 1</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Start from COPT's defaults</p>
+<p>COPT's algorithmic parameters (<code>LpMethod</code>, <code>Presolve</code>, <code>CutLevel</code>, <code>HeurLevel</code>, <code>Scaling</code>, …) default to -1, meaning the solver chooses based on the characteristics of the model. A parameter set tuned on Gurobi targets Gurobi's algorithmic implementation; copied to COPT it is usually meaningless and can reduce performance. When migrating, keep only the limits the application requires (time limit, gap, threads) and run a first benchmark with defaults. Performance parameters are covered in Chapter 6; COPT's tuner (<code>m.tune()</code>) can be used there.</p>
+</div>
+<h2 id="28-constants">2.8 Constants<a class="headerlink" href="#28-constants" title="Permanent link">&para;</a></h2>
+<p>Constant names are largely the same; the value of <code>INFINITY</code> and the encoding of basis statuses differ:</p>
+<table>
+<thead>
+<tr>
+<th>Meaning</th>
+<th>Gurobi</th>
+<th>COPT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Continuous / binary / integer</td>
+<td><code>GRB.CONTINUOUS</code> (<code>'C'</code>) / <code>GRB.BINARY</code> (<code>'B'</code>) / <code>GRB.INTEGER</code> (<code>'I'</code>)</td>
+<td><code>COPT.CONTINUOUS</code> / <code>COPT.BINARY</code> / <code>COPT.INTEGER</code></td>
+<td>Same names; the COPT documentation lists the constants without literal values — use the constants</td>
+</tr>
+<tr>
+<td>Minimize / maximize</td>
+<td><code>GRB.MINIMIZE</code> (1) / <code>GRB.MAXIMIZE</code> (-1)</td>
+<td><code>COPT.MINIMIZE</code> / <code>COPT.MAXIMIZE</code></td>
+<td>Same names; use the constants</td>
+</tr>
+<tr>
+<td>Infinity</td>
+<td><code>GRB.INFINITY</code> (1e100)</td>
+<td><code>COPT.INFINITY</code> (1e30)</td>
+<td><strong>Different values</strong>, see 2.2</td>
+</tr>
+<tr>
+<td>Constraint sense</td>
+<td><code>GRB.LESS_EQUAL</code> (<code>'&lt;'</code>) / <code>GRB.GREATER_EQUAL</code> (<code>'&gt;'</code>) / <code>GRB.EQUAL</code> (<code>'='</code>)</td>
+<td><code>COPT.LESS_EQUAL</code> / <code>COPT.GREATER_EQUAL</code> / <code>COPT.EQUAL</code></td>
+<td>Same names; use the constants</td>
+</tr>
+<tr>
+<td>SOS type</td>
+<td><code>GRB.SOS_TYPE1</code> / <code>GRB.SOS_TYPE2</code></td>
+<td><code>COPT.SOS_TYPE1</code> / <code>COPT.SOS_TYPE2</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Basis status</td>
+<td><code>GRB.BASIC</code> (0) / <code>NONBASIC_LOWER</code> (-1) / <code>NONBASIC_UPPER</code> (-2) / <code>SUPERBASIC</code> (-3)</td>
+<td><code>COPT.BASIS_LOWER</code> (0) / <code>BASIS_BASIC</code> (1) / <code>BASIS_UPPER</code> (2) / <code>BASIS_SUPERBASIC</code> (3) / <code>BASIS_FIXED</code> (4)</td>
+<td><strong>Completely different encoding</strong></td>
+</tr>
+<tr>
+<td>Parameter / attribute / info namespaces</td>
+<td><code>GRB.Param.*</code> / <code>GRB.Attr.*</code></td>
+<td><code>COPT.Param.*</code> / <code>COPT.Attr.*</code> (model level) / <code>COPT.Info.*</code> (variable and constraint level)</td>
+<td>COPT splits model attributes and variable/constraint information into two namespaces</td>
+</tr>
+<tr>
+<td>Callback contexts</td>
+<td><code>GRB.Callback.MIPSOL</code> etc.</td>
+<td><code>COPT.CBCONTEXT_MIPSOL</code> etc.</td>
+<td>Chapter 3</td>
+</tr>
+</tbody>
+</table>
+<h2 id="29-file-io">2.9 File I/O<a class="headerlink" href="#29-file-io" title="Permanent link">&para;</a></h2>
+<p><code>m.write(filename)</code> picks the format from the extension on both sides. Reading differs: Gurobi reads model files with the module-level <code>gp.read()</code>, while <code>m.read()</code> only reads auxiliary files (basis, MIP start, parameters, …); COPT uses <code>m.read()</code> for everything, model and auxiliary files alike, recognized by extension.</p>
+<table>
+<thead>
+<tr>
+<th>Content</th>
+<th>Gurobi extension</th>
+<th>COPT extension</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model (text)</td>
+<td><code>.lp</code>, <code>.mps</code>, <code>.rew</code>, <code>.rlp</code></td>
+<td><code>.lp</code>, <code>.mps</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Model (binary)</td>
+<td>None</td>
+<td><code>.bin</code></td>
+<td>COPT only</td>
+</tr>
+<tr>
+<td>Conic model</td>
+<td>None</td>
+<td><code>.cbf</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Solution</td>
+<td><code>.sol</code>, <code>.json</code></td>
+<td><code>.sol</code>; JSON via <code>writeJsonSol()</code> / <code>readJsonSol()</code></td>
+<td></td>
+</tr>
+<tr>
+<td>MIP start</td>
+<td><code>.mst</code></td>
+<td><code>.mst</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Basis</td>
+<td><code>.bas</code></td>
+<td><code>.bas</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Branching priorities</td>
+<td><code>.ord</code> (read only)</td>
+<td><code>.ord</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Parameters</td>
+<td><code>.prm</code></td>
+<td><code>.par</code></td>
+<td><strong>Different extension</strong></td>
+</tr>
+<tr>
+<td>IIS</td>
+<td><code>.ilp</code></td>
+<td><code>.iis</code> (via <code>writeIIS()</code>)</td>
+<td>Run <code>computeIIS()</code> first</td>
+</tr>
+<tr>
+<td>Feasibility-relaxation problem</td>
+<td>None</td>
+<td><code>.relax</code> (via <code>writeRelax()</code>)</td>
+<td>After <code>feasRelax</code></td>
+</tr>
+<tr>
+<td>Dual problem</td>
+<td><code>.dua</code>, <code>.dlp</code></td>
+<td>Set parameter <code>WriteDualProb</code> to 1 when writing <code>.lp</code> / <code>.mps</code> / <code>.bin</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Besides extension-based <code>write</code>/<code>read</code>, COPT also offers explicit-format methods (<code>writeLp</code>, <code>writeMps</code>, <code>writeBin</code>, <code>writeSol</code>, <code>writeMst</code>, <code>writeBasis</code>, <code>writeParam</code>, <code>writeIIS</code>, <code>writeRelax</code>, <code>readMps</code>, <code>readLp</code>, <code>readSol</code>, <code>readMst</code>, <code>readBasis</code>, <code>readParam</code>, …) with the same behavior.</p>
+<h2 id="210-not-covered-in-this-chapter">2.10 Not covered in this chapter<a class="headerlink" href="#210-not-covered-in-this-chapter" title="Permanent link">&para;</a></h2>
+<p>The following features exist on both sides but differ substantially in interface design. They are covered in later chapters:</p>
+<ul>
+<li><strong>MIP starts</strong>: <code>x.Start</code> → <code>setMipStart</code> + <code>loadMipStart</code> (Chapter 3)</li>
+<li><strong>Callbacks</strong>: Gurobi's function-style <code>optimize(callback)</code> → subclassing COPT's <code>CallbackBase</code> (Chapter 3)</li>
+<li><strong>Modifying a model after solving and re-solving</strong>: two-sided constraints, parameter persistence, warm-start behavior (Chapter 3)</li>
+<li><strong>Matrix API</strong>, <strong>multiple objectives</strong>, <strong>solution pool</strong>, <strong>IIS and feasibility relaxation</strong>, <strong>tuner</strong>, <strong>conic constraints and nonconvex / nonlinear models</strong> (Chapter 4)</li>
+</ul>
+<p><em>Chapter 3 and later chapters will be published progressively. If you hit a usage pattern this guide does not cover, please open an issue in the <a href="https://github.com/redpanda997/gurobi-to-copt/issues">GitHub repository</a> — frequently asked questions will be folded into later chapters.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../chapter1/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Chapter 1 · Up and running in ten minutes">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Chapter 1 · Up and running in ten minutes
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 redpanda997
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/redpanda997/gurobi-to-copt" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://guide.coap.online/copt/en-doc/" target="_blank" rel="noopener" title="COPT 文档" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
