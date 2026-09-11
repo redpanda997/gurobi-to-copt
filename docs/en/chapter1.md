@@ -5,7 +5,7 @@ hide:
 
 # Chapter 1 — Up and running in ten minutes
 
-The goal of this chapter is to get your first Gurobi model running on COPT within ten minutes, and to give you a feel for how close the two APIs are.
+This chapter covers installation, license configuration and two complete examples. It shows how to run a Gurobi model on COPT and how the two APIs correspond.
 
 ## 1.1 Installation
 
@@ -42,7 +42,7 @@ print(COPT.VERSION_MAJOR, COPT.VERSION_MINOR, COPT.VERSION_TECHNICAL)   # e.g. 8
 
 All examples in this guide are small models and run under any type of COPT license.
 
-At startup COPT logs each location it checked for a license. When a license is not picked up, read these lines first:
+At startup COPT logs each location it checked for a license. When a license is not found, these lines are the first thing to check:
 
 ```
 [INFO] checks license for COPT v8.0.6 20260807
@@ -112,21 +112,21 @@ A = 70
 B = 15
 ```
 
-Line by line, only five things changed:
+Compared line by line, the two scripts differ in five places:
 
 | # | Gurobi | COPT | Notes |
 |---|---|---|---|
 | 1 | `import gurobipy as gp` / `from gurobipy import GRB` | `import coptpy as cp` / `from coptpy import COPT` | Constant namespace `GRB` → `COPT` |
 | 2 | `m = gp.Model("production")` | `env = cp.Envr()` <br> `m = env.createModel("production")` | COPT requires an explicit environment `Envr`; models are created from it |
 | 3 | `m.optimize()` | `m.solve()` | Different method name |
-| 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | Same constant name, **different numeric value** (2 vs 1) — always use the constant, never the number |
+| 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | Same constant name, **different numeric value** (2 vs 1); use the constant, not the number |
 | 5 | `v.VarName` / `v.X` | `v.name` / `v.x` | The name attribute is `name` and the solution value is `x`; `m.ObjVal` and `m.Status` work unchanged in COPT, see below |
 
-Good news on item 5: the COPT documentation states that model attributes and variable / constraint information can be accessed either in their **original case** (`m.ObjVal`, `m.Status`, `x.LB`, `x.UB`, `x.Obj`, `c.Slack`) or in **all lowercase** (`m.objval`, `x.lb`). So wherever the two APIs use the same name, the Gurobi spelling can stay. What has to change are the attributes whose *names* differ: `VarName` → `name`, `X` → `x`, `RC` → `rc`, `Pi` → `pi`, `NumVars` → `cols`, `Runtime` → `solvingtime`, and so on; Chapter 2 has the full list. (In practice coptpy's attribute lookup is case-insensitive, so `x.X` and `c.Pi` also run — but this is not guaranteed by the documentation and this guide does not rely on it.) COPT code in this guide uses the lowercase spelling from the COPT documentation.
+Item 5 needs a note. The COPT documentation states that model attributes and variable / constraint information can be accessed either in their **original case** (`m.ObjVal`, `m.Status`, `x.LB`, `x.UB`, `x.Obj`, `c.Slack`) or in **all lowercase** (`m.objval`, `x.lb`). Attributes that share a name on both sides can therefore keep the Gurobi spelling. What has to change are the attributes whose names differ, such as `VarName` → `name`, `X` → `x`, `RC` → `rc`, `Pi` → `pi`, `NumVars` → `cols` and `Runtime` → `solvingtime`; Chapter 2 has the full list. In practice coptpy's attribute lookup is case-insensitive, so `x.X` and `c.Pi` also run, but the documentation does not guarantee this and this guide does not rely on it. COPT code in this guide uses the lowercase spelling from the documentation.
 
 ## 1.4 A more typical example: tupledict, quicksum and shadow prices
 
-Real gurobipy code rarely has two variables. It is usually built from `addVars` + `tupledict` + `quicksum` + `addConstrs`. Here is a transportation problem that also sets a parameter and reads dual values:
+gurobipy code in real projects is usually built with `addVars`, `tupledict`, `quicksum` and `addConstrs`. The following transportation problem uses these, and also sets a parameter and reads dual values.
 
 <div class="grid side-by-side" markdown>
 
@@ -218,7 +218,7 @@ Total cost = 770
   shadow price M3: 9
 ```
 
-On top of the five changes from 1.3, this example introduces three more — the ones you will meet most often in a migration:
+Besides the five changes from 1.3, this example has three more differences, which are also the most common ones in a migration:
 
 | Gurobi | COPT | Notes |
 |---|---|---|
@@ -230,7 +230,7 @@ On top of the five changes from 1.3, this example introduces three more — the 
 
 ## 1.5 Chapter checklist
 
-To move a gurobipy script to COPT, mechanically apply these seven steps first. Most small and medium scripts run after this:
+To migrate a gurobipy script, apply the following seven replacements first. Most small and medium scripts run after this:
 
 1. `import gurobipy as gp` → `import coptpy as cp`; `GRB` → `COPT`
 2. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
@@ -240,4 +240,4 @@ To move a gurobipy script to COPT, mechanically apply these seven steps first. M
 6. `name=` → `nameprefix=` in `addVars` / `addConstrs`
 7. Renamed attributes: `VarName`/`ConstrName` → `name`, `X` → `x`, `Pi` → `pi`, `RC` → `rc`, `NumVars`/`NumConstrs` → `cols`/`rows`, `Runtime` → `solvingtime`, `MIPGap` → `bestgap` (full list in 2.6)
 
-If your code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the model after solving, continue with Chapters 2 and 3.
+If the code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the model after solving, continue with Chapters 2 and 3.
