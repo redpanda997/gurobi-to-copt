@@ -83,7 +83,7 @@ vals = m.getInfo(COPT.Info.Value, x)     # tupledict，键与 x 相同
 | 变量个数 | `m.NumVars` | `m.cols` | |
 | 删除变量 | `m.remove(x)` | `m.remove(x)` | |
 | 修改类型 | `x.VType = GRB.INTEGER` | `x.vtype = COPT.INTEGER` 或 `m.setVarType(x, COPT.INTEGER)` | |
-| 修改边界 | `x.LB = 0; x.UB = 5` | `x.lb = 0; x.ub = 5` | |
+| 修改边界 | `x.LB = 0; x.UB = 5` | `x.LB = 0; x.UB = 5` | 同名 |
 | 批量读 / 写属性 | `m.getAttr("LB", vars)` / `m.setAttr("LB", vars, vals)` | `m.getInfo(COPT.Info.LB, vars)` / `m.setInfo(COPT.Info.LB, vars, vals)` | Gurobi 用字符串属性名，COPT 用 `COPT.Info.*` 常量 |
 
 **边界与无穷大**：`GRB.INFINITY` 是 `1e100`，`COPT.INFINITY` 是 `1e30`。按 COPT 文档，绝对值达到 `1e30` 的边界即被视为无穷，因此旧代码中的 `1e100` 在 COPT 中同样被识别为无界。反向则不成立：从 COPT 读出的 `1e30` 传给 Gurobi 时会被当作有限值。建议统一使用 `COPT.INFINITY` 常量。
@@ -182,10 +182,10 @@ m.setObjective(expr, COPT.MINIMIZE)
 | 操作 | Gurobi | COPT | 说明 |
 |---|---|---|---|
 | 设置目标 | `m.setObjective(expr, GRB.MAXIMIZE)` | `m.setObjective(expr, COPT.MAXIMIZE)` | 一致 |
-| 只改方向 | `m.ModelSense = GRB.MINIMIZE` | `m.objsense = COPT.MINIMIZE` 或 `m.setObjSense(COPT.MINIMIZE)` | |
-| 目标常数项 | `m.ObjCon = 5` | `m.objconst = 5` 或 `m.setObjConst(5)` | |
+| **只改方向** | **`m.ModelSense = GRB.MINIMIZE`** | **`m.ObjSense = COPT.MINIMIZE`** 或 `m.setObjSense(COPT.MINIMIZE)` | |
+| **目标常数项** | **`m.ObjCon = 5`** | **`m.ObjConst = 5`** 或 `m.setObjConst(5)` | |
 | 读取目标表达式 | `m.getObjective()` | `m.getObjective()` | |
-| 变量的目标系数 | `x.Obj` | `x.obj` | |
+| 变量的目标系数 | `x.Obj` | `x.Obj` | 同名 |
 | 多目标 | `m.setObjectiveN(expr, index, priority, weight, ...)` | `m.setObjectiveN(index, expr, sense, priority, weight, ...)` | **参数顺序不同**，第 4 章 |
 | 矩阵形式目标 | `m.setMObjective(...)` | `m.setMObjective(...)` | 第 4 章 |
 | 线性表达式逐项添加 | `expr.addTerms(coeffs, vars)` | `expr.addTerm(var, coeff)` / `expr.addTerms(vars, coeffs)` | **参数顺序相反**，见上文 |
@@ -201,8 +201,8 @@ m.setObjective(expr, COPT.MINIMIZE)
 | 只解 LP 松弛 / LP 问题 | `m.relax().optimize()` | `m.solveLP()`（忽略整数性，直接求解 LP） |
 | 中断 | `m.terminate()` | `m.interrupt()` |
 | 清除解 | `m.reset()` / `m.reset(1)` | `m.reset()` / `m.resetAll()`（后者同时清除 MIP 初始解、IIS 等附加信息） |
-| 读取状态 | `m.Status` | `m.status` |
-| 是否有可用解 | `m.SolCount > 0` | `m.hassol`（旧属性 `hasmipsol` / `haslpsol` 在 8.0 文档中已标记为弃用） |
+| 读取状态 | `m.Status` | `m.Status` |
+| 是否有可用解 | `m.SolCount > 0` | `m.HasSol`（旧属性 `HasMipSol` / `HasLpSol` 在 8.0 文档中已标记为弃用） |
 
 状态码对照如下。两边都应使用常量，不要写数值：
 
@@ -278,23 +278,23 @@ m.loadMipStart()
 
 </div>
 
-下表 COPT 列给出的是 COPT 文档中的小写写法。**加粗**的行是名字本身不同、必须修改的属性；其余行两边同名，按 COPT 文档可用原始大小写或全小写访问，Gurobi 写法可以直接保留。
+下表 COPT 列按 COPT 文档中的原始大小写给出属性名（模型属性如 `ObjVal`、`BestGap`，变量 / 约束信息项如 `Value`、`RedCost`、`Dual`）。按 COPT 文档，这些名称也可以全小写访问（`m.objval`、`x.value`）；`x.x`、`x.rc`、`c.pi` 以及 `name`、`vtype`、`basis`、`index` 是文档另外给出的简写属性，只有小写形式。**加粗**的行是名字本身不同、必须修改的属性；其余行两边同名，Gurobi 写法可以直接保留。
 
 **变量属性**
 
 | 含义 | Gurobi | COPT | 备注 |
 |---|---|---|---|
-| **解值** | **`x.X`** | **`x.x`（或 `x.value`）** | 对应 COPT 信息项 `Value` |
+| **解值** | **`x.X`** | **`x.Value`**（简写 `x.x`） | |
 | **变量名** | **`x.VarName`** | **`x.name`** | |
-| 下界 / 上界 | `x.LB` / `x.UB` | `x.lb` / `x.ub` | |
-| 目标系数 | `x.Obj` | `x.obj` | |
+| 下界 / 上界 | `x.LB` / `x.UB` | `x.LB` / `x.UB` | |
+| 目标系数 | `x.Obj` | `x.Obj` | |
 | **类型** | **`x.VType`** | **`x.vtype`** | |
-| **检验数（LP）** | **`x.RC`** | **`x.rc`** | 对应信息项 `RedCost`；仅 LP 或有 LP 解时可用 |
+| **检验数（LP）** | **`x.RC`** | **`x.RedCost`**（简写 `x.rc`） | 仅 LP 或有 LP 解时可用 |
 | **基状态** | **`x.VBasis`** | **`x.basis`** | 值的编码不同（见 2.8 节） |
 | **MIP 初始解** | **`x.Start = v`** | **`m.setMipStart(x, v)` + `m.loadMipStart()`** | 第 3 章 |
 | **解池中第 k 个解** | **`m.Params.SolutionNumber = k; x.PoolNX`** | **`m.getPoolSolution(k, vars)`** | Gurobi 13 起 `Xn` 已弃用，改为 `PoolNX`；第 4 章 |
-| 灵敏度分析 | `x.SAObjLow/Up`、`x.SALBLow/Up`、`x.SAUBLow/Up` | `x.saobjlow/up`、`x.salblow/up`、`x.saublow/up` | COPT 默认不计算，需要时设置 `ReqSensitivity = 1` 开启 |
-| **无界方向** | **`x.UnbdRay`** | **`x.primalray`** | 两边都需显式开启：Gurobi `InfUnbdInfo = 1`，COPT `ReqFarkasRay = 1` |
+| 灵敏度分析 | `x.SAObjLow/Up`、`x.SALBLow/Up`、`x.SAUBLow/Up` | `x.SAObjLow/Up`、`x.SALBLow/Up`、`x.SAUBLow/Up` | 同名；COPT 默认不计算，需要时设置 `ReqSensitivity = 1` 开启 |
+| **无界方向** | **`x.UnbdRay`** | **`x.PrimalRay`** | 两边都需显式开启：Gurobi `InfUnbdInfo = 1`，COPT `ReqFarkasRay = 1` |
 | **IIS 成员** | **`x.IISLB` / `x.IISUB`** | **`x.getLowerIIS()` / `x.getUpperIIS()`** | 需先 `computeIIS()` |
 | 索引 | `x.index` | `x.index` | |
 
@@ -303,11 +303,11 @@ m.loadMipStart()
 | 含义 | Gurobi | COPT | 备注 |
 |---|---|---|---|
 | **约束名** | **`c.ConstrName`** | **`c.name`** | |
-| **右端项 / 方向** | **`c.RHS` / `c.Sense`** | **`c.lb` / `c.ub`** | 两侧界表示，见 2.3 节 |
-| **对偶值（影子价格）** | **`c.Pi`** | **`c.pi`（或 `c.dual`）** | 对应信息项 `Dual`；仅 LP 或有 LP 解时可用 |
-| 松弛量 | `c.Slack` | `c.slack` | |
+| **右端项 / 方向** | **`c.RHS` / `c.Sense`** | **`c.LB` / `c.UB`** | 两侧界表示，见 2.3 节 |
+| **对偶值（影子价格）** | **`c.Pi`** | **`c.Dual`**（简写 `c.pi`） | 仅 LP 或有 LP 解时可用 |
+| 松弛量 | `c.Slack` | `c.Slack` | |
 | **基状态** | **`c.CBasis`** | **`c.basis`** | |
-| **Farkas 对偶** | **`c.FarkasDual`** | **`c.dualfarkas`** | 两边都需显式开启：Gurobi `InfUnbdInfo = 1`，COPT `ReqFarkasRay = 1` |
+| **Farkas 对偶** | **`c.FarkasDual`** | **`c.DualFarkas`** | 两边都需显式开启：Gurobi `InfUnbdInfo = 1`，COPT `ReqFarkasRay = 1` |
 | **IIS 成员** | **`c.IISConstr`** | **`c.getLowerIIS()` / `c.getUpperIIS()`** | COPT 区分是下界还是上界参与了 IIS |
 | 索引 | `c.index` | `c.index` | |
 
@@ -315,23 +315,23 @@ m.loadMipStart()
 
 | 含义 | Gurobi | COPT | 备注 |
 |---|---|---|---|
-| 求解状态 | `m.Status` | `m.status` | |
-| 目标值 | `m.ObjVal` | `m.objval` | |
-| 目标界 | `m.ObjBound` | `m.objbound` | 旧属性 `bestbnd` 在 8.0 文档中已标记为弃用 |
-| **相对 gap** | **`m.MIPGap`** | **`m.bestgap`** | |
-| **求解时间** | **`m.Runtime`** | **`m.solvingtime`** | |
-| **节点数** | **`m.NodeCount`** | **`m.nodecnt`** | |
-| **单纯形迭代数** | **`m.IterCount`** | **`m.simplexiter`** | |
-| **内点法迭代数** | **`m.BarIterCount`** | **`m.barrieriter`** | |
-| **解池中的解个数** | **`m.SolCount`** | **`m.poolsols`** | |
-| **变量 / 约束 / 非零元个数** | **`m.NumVars` / `m.NumConstrs` / `m.NumNZs`** | **`m.cols` / `m.rows` / `m.elems`** | |
-| **整数 / 二元变量个数** | **`m.NumIntVars` / `m.NumBinVars`** | **`m.ints` / `m.bins`** | |
-| **二次约束 / SOS 个数** | **`m.NumQConstrs` / `m.NumSOS`** | **`m.qconstrs` / `m.soss`** | |
-| 是否 MIP | `m.IsMIP` | `m.ismip` | |
-| **是否有二次目标** | **`m.IsQP`** | **`m.hasqobj`** | |
-| **目标方向 / 常数项** | **`m.ModelSense` / `m.ObjCon`** | **`m.objsense` / `m.objconst`** | |
-| **是否有解** | **`m.SolCount > 0`** | **`m.hassol`** | |
-| **系数范围** | **`m.MaxCoeff/MinCoeff`、`m.MaxRHS/MinRHS`、`m.MaxObjCoeff/MinObjCoeff`** | **`m.maxelem/minelem`、`m.maxrhs/minrhs`、`m.maxcost/mincost`** | |
+| 求解状态 | `m.Status` | `m.Status` | |
+| 目标值 | `m.ObjVal` | `m.ObjVal` | |
+| 目标界 | `m.ObjBound` | `m.ObjBound` | 旧属性 `BestBnd` 在 8.0 文档中已标记为弃用 |
+| **相对 gap** | **`m.MIPGap`** | **`m.BestGap`** | |
+| **求解时间** | **`m.Runtime`** | **`m.SolvingTime`** | |
+| **节点数** | **`m.NodeCount`** | **`m.NodeCnt`** | |
+| **单纯形迭代数** | **`m.IterCount`** | **`m.SimplexIter`** | |
+| **内点法迭代数** | **`m.BarIterCount`** | **`m.BarrierIter`** | |
+| **解池中的解个数** | **`m.SolCount`** | **`m.PoolSols`** | |
+| **变量 / 约束 / 非零元个数** | **`m.NumVars` / `m.NumConstrs` / `m.NumNZs`** | **`m.Cols` / `m.Rows` / `m.Elems`** | |
+| **整数 / 二元变量个数** | **`m.NumIntVars` / `m.NumBinVars`** | **`m.Ints` / `m.Bins`** | |
+| **二次约束 / SOS 个数** | **`m.NumQConstrs` / `m.NumSOS`** | **`m.QConstrs` / `m.Soss`** | |
+| 是否 MIP | `m.IsMIP` | `m.IsMIP` | |
+| **是否有二次目标** | **`m.IsQP`** | **`m.HasQObj`** | |
+| **目标方向 / 常数项** | **`m.ModelSense` / `m.ObjCon`** | **`m.ObjSense` / `m.ObjConst`** | |
+| **是否有解** | **`m.SolCount > 0`** | **`m.HasSol`** | |
+| **系数范围** | **`m.MaxCoeff/MinCoeff`、`m.MaxRHS/MinRHS`、`m.MaxObjCoeff/MinObjCoeff`** | **`m.MaxElem/MinElem`、`m.MaxRHS/MinRHS`、`m.MaxCost/MinCost`** | |
 
 **批量读取**
 
