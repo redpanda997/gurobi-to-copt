@@ -1,67 +1,47 @@
 # 从 Gurobi 迁移到 COPT · Migrating from Gurobi to COPT
 
-Python 用户从 Gurobi (gurobipy) 迁移到 COPT (coptpy) 的实用指南，中英双语。
-在线阅读：https://redpanda997.github.io/gurobi-to-copt/ （中文） · https://redpanda997.github.io/gurobi-to-copt/en/ （English）
+**在线阅读：** [中文](https://redpanda997.github.io/gurobi-to-copt/) · [English](https://redpanda997.github.io/gurobi-to-copt/en/)
 
-A bilingual, hands-on guide for moving Python optimization models from Gurobi to COPT.
-Every code sample is run against gurobipy 13.0.3 and coptpy 8.0.6.
+这是一份写给 Python 用户的求解器迁移教程：如果你手头有一堆用 gurobipy 写的优化模型，想换到 COPT (coptpy) 上跑，这份教程告诉你哪些代码可以原样保留、哪些必须改、改成什么，以及两个求解器在设计上真正不同的地方在哪里。
 
-## 仓库结构 · Layout
+教程以并排对照的方式展开——每个概念左边是 Gurobi 写法，右边是 COPT 写法——并尽量避免"照着改就行"式的敷衍：凡是两边不一一对应的地方，都解释了为什么，以及迁移时该怎么处理。
+
+## 内容
+
+| 章节 | 内容 | 状态 |
+|---|---|---|
+| 第 1 章 十分钟快速上手 | 安装、许可证、第一个模型的并排对照、七步迁移检查清单 | 已发布 |
+| 第 2 章 核心对照表 | 环境与模型、变量、约束、目标、求解与状态码、结果读取、参数、常量、文件读写的逐项对照 | 已发布 |
+| 第 3 章 不是一一对应的地方 | 两侧界约束、MIP 初始解、回调、求解后修改模型、参数语义差异 | 编写中 |
+| 第 4 章 进阶专题 | 矩阵接口、多目标、解池、IIS、调参器、锥约束与非线性 | 计划中 |
+| 第 5 章 在建模框架中切换 | Pyomo、JuMP、CVXPY、PuLP、AMPL、GAMS | 计划中 |
+| 第 6 章 验证与性能 | 结果一致性、公平对比、读日志、何时调参 | 计划中 |
+| 第 7 章 速查表与常见问题 | 一页纸速查表、FAQ | 计划中 |
+
+## 关于准确性
+
+文中所有代码都在 gurobipy 13.0.3 和 coptpy 8.0.6 上实际运行过，两边输出一致。对照表里的每一条表述都对照过两家的官方文档，凡是文档没有记载、只是实测可行的行为，文中都明确标注为"实测"。API 会随版本演进，发现过时或错误之处欢迎提 issue 或 PR。
+
+## 目录结构
 
 ```
-docs/
-  zh/            中文页面（index / chapter1 / chapter2 …）
-  en/            English pages, same structure
-  assets/        自定义样式（左右并排代码块等）
-examples/        文中两个完整示例的可运行脚本（Gurobi 版与 COPT 版）
-tools/build_docs.py   从单文件 Markdown 源（tools/source/）生成 docs/ 页面的脚本（见下）
-mkdocs.yml       MkDocs Material 配置（含中英文切换）
-.github/workflows/deploy.yml   推送到 main 后自动构建并发布到 GitHub Pages
+docs/zh/       中文页面
+docs/en/       英文页面（与中文逐节对应）
+examples/      文中两个完整示例的可运行脚本（Gurobi 版与 COPT 版）
+mkdocs.yml     网站配置（MkDocs Material，含中英文切换）
 ```
 
-## 本地预览 · Preview locally
+网站由 GitHub Actions 自动构建发布；本地预览：
 
 ```bash
 pip install -r requirements.txt
-mkdocs serve          # http://127.0.0.1:8000
+mkdocs serve
 ```
 
-## 编辑内容 · Editing
+## 贡献
 
-直接修改 `docs/zh/*.md` 和 `docs/en/*.md` 即可，推送到 `main` 后约一分钟自动上线。
+欢迎通过 [Issues](https://github.com/redpanda997/gurobi-to-copt/issues) 反馈错误、提出想看到的内容，或直接提 PR 修改 `docs/` 下的 Markdown。
 
-页面使用了两个 MkDocs Material 写法：
+---
 
-* 说明框：`!!! tip "标题"` 后接缩进四格的正文；
-* Gurobi / COPT 并排代码：
-
-  ````markdown
-  <div class="grid side-by-side" markdown>
-
-  ```python title="Gurobi"
-  ...
-  ```
-
-  ```python title="COPT"
-  ...
-  ```
-
-  </div>
-  ````
-
-`tools/source/` 里保留了单文件版本（`gurobi-to-copt-zh.md` / `-en.md`，用于粘贴到富文本网站），
-`python tools/build_docs.py` 会把它们拆成上述页面并覆盖 `docs/`。两种维护方式选一种即可：
-直接维护 `docs/`（推荐，此时删掉 `tools/`），或维护单文件源后重新运行脚本。
-
-## 发布设置 · GitHub Pages setup（只需做一次）
-
-1. 推送本目录到 `main`；
-2. 等待 Actions 中的 **Deploy docs** 首次运行成功（它会创建 `gh-pages` 分支）；
-3. 仓库 **Settings → Pages → Build and deployment → Source** 选 *Deploy from a branch*，
-   分支选 `gh-pages` / `(root)`，保存；
-4. 一两分钟后站点在 `https://redpanda997.github.io/gurobi-to-copt/` 上线。
-   若日后把仓库转移到其他账号或组织，只需改 `mkdocs.yml` 里的 `site_url` / `repo_url` / `repo_name`。
-
-## License
-
-文档内容版权归 Cardinal Operations 所有；示例代码可自由使用。
+*A bilingual, hands-on guide for moving Python optimization models from Gurobi to COPT. Every code sample is verified against gurobipy 13.0.3 and coptpy 8.0.6, and every statement in the mapping tables is checked against both vendors' official documentation. Issues and pull requests are welcome.*
