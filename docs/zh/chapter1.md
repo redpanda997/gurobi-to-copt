@@ -230,14 +230,20 @@ Total cost = 770
 
 ## 1.5 本章检查清单
 
-迁移一段 gurobipy 代码时，先按以下七项逐条替换。多数中小型脚本完成这七项后即可运行：
+迁移一段 gurobipy 代码时，先做以下七项基本替换。其中除第 3 项外，其余六项与 COPT 团队维护的对照表 [COPTPY-GUROBIPY](https://github.com/leavesgrp/COPTPY-GUROBIPY) 列出的核心规则相同：
 
-1. `import gurobipy as gp` → `import coptpy as cp`；`GRB` → `COPT`
-2. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
-3. `m.optimize()` → `m.solve()`
-4. 所有硬编码的状态码数字（如 `== 2`）改为常量 `COPT.OPTIMAL` 等
-5. `m.Params.X = v` → `m.Param.X = v`（`Params` 改为单数 `Param`）或 `m.setParam(COPT.Param.X, v)`，并核对参数名（2.7 节）
-6. `addVars`/`addConstrs` 的 `name=` → `nameprefix=`
-7. 改名的属性：`VarName`/`ConstrName` → `name`，`X` → `x`，`Pi` → `pi`，`RC` → `rc`，`NumVars`/`NumConstrs` → `cols`/`rows`，`Runtime` → `solvingtime`，`MIPGap` → `bestgap`（完整列表见 2.6 节）
+1. `import gurobipy as gp` → `import coptpy as cp`
+2. `GRB` → `COPT`
+3. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
+4. `addVars`/`addConstrs` 的 `name=` → `nameprefix=`
+5. `m.optimize()` → `m.solve()`
+6. `m.getAttr("X", vars)` → `m.getInfo(COPT.Info.Value, vars)`
+7. `VarName`/`ConstrName` → `name`
 
-如果代码用到了回调、MIP 初始解（`x.Start`）、`addRange` 或求解后修改模型，请继续阅读第 2、3 章。
+然后检查三项：
+
+8. 硬编码的状态码数字（如 `== 2`）改为常量 `COPT.OPTIMAL` 等
+9. `m.Params.X = v` → `m.Param.X = v`（`Params` 改为单数 `Param`）或 `m.setParam(COPT.Param.X, v)`，并核对参数名（2.7 节）
+10. 其他改名的属性：`X` → `x`，`Pi` → `pi`，`RC` → `rc`，`NumVars`/`NumConstrs` → `cols`/`rows`，`Runtime` → `solvingtime`，`MIPGap` → `bestgap`（完整列表见 2.6 节）
+
+多数中小型脚本完成这十项后即可运行。如果代码用到了回调、MIP 初始解（`x.Start`）、`addRange`、手工构造的 `LinExpr` 或求解后修改模型，请继续阅读第 2、3 章。
