@@ -1,8 +1,8 @@
 # Migrating from Gurobi to COPT: A Practical Guide for Python Users
 
-> **Versions**: Every code sample in this guide was run and verified with gurobipy 13.0.3 and coptpy 8.0.6. APIs evolve; the [COPT documentation](https://guide.coap.online/copt/en-doc/) is the final authority.
+> **Versions**: Every code sample in this guide was run and verified with gurobipy 13.0.3 and coptpy 8.0.6. APIs evolve; the [Gurobi documentation](https://docs.gurobi.com/) and the [COPT documentation](https://guide.coap.online/copt/en-doc/) are the final authority.
 >
-> **Audience**: Developers who model with gurobipy and want to move existing code to COPT. If you use a modeling framework such as Pyomo, JuMP, CVXPY, PuLP, AMPL or GAMS, skip ahead to Chapter 5 — you usually only need to change the solver name.
+> **Audience**: Developers who model with gurobipy and want to move existing code to COPT. If you work through a modeling framework rather than calling the solver API directly, skip ahead to Chapter 5 — you usually only need to change the solver name.
 
 ---
 
