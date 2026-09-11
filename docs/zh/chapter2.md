@@ -2,31 +2,31 @@
 
 本章按建模流程的顺序给出逐项对照：环境与模型 → 变量 → 约束 → 目标 → 求解与状态 → 结果读取 → 参数 → 常量 → 文件读写。每张表都可以单独当速查表使用。
 
-阅读本章之前，先记住三条总规则，它们能解释绝大多数差异：
+以下三条规则概括了两套 API 的主要差异：
 
-1. **方法名基本相同。** `addVar`、`addVars`、`addConstr`、`addConstrs`、`setObjective`、`getVars`、`getConstrs`、`computeIIS`、`write`、`read`、`remove`、`reset`、`tune` 等在两边同名同义。最显眼的例外是 `optimize()` → `solve()`。
-2. **属性可以用原始大小写或全小写访问，但部分属性名不同。** COPT 文档规定属性名可写成原始大小写（`m.ObjVal`）或全小写（`m.objval`），所以与 Gurobi 同名的属性可以原样保留。需要动手改的是名字本身不同的属性，见 2.6 节。
-3. **状态码数值不同。** `GRB.OPTIMAL == 2` 而 `COPT.OPTIMAL == 1`。凡是代码里写了数字而不是常量的地方，迁移后都会出错。
+1. **方法名基本相同。** `addVar`、`addVars`、`addConstr`、`addConstrs`、`setObjective`、`getVars`、`getConstrs`、`computeIIS`、`write`、`read`、`remove`、`reset`、`tune` 等在两边同名同义。主要例外是 `optimize()` → `solve()`。
+2. **属性可以用原始大小写或全小写访问，但部分属性名不同。** COPT 文档规定属性名可写成原始大小写（`m.ObjVal`）或全小写（`m.objval`），因此与 Gurobi 同名的属性可以保留。需要修改的是名称不同的属性，见 2.6 节。
+3. **状态码数值不同。** `GRB.OPTIMAL == 2` 而 `COPT.OPTIMAL == 1`。代码中直接写数字而不是常量的判断，迁移后会失效。
 
 ## 2.1 环境与模型生命周期
 
 | 操作 | Gurobi | COPT | 说明 |
 |---|---|---|---|
 | 导入 | `import gurobipy as gp` <br> `from gurobipy import GRB` | `import coptpy as cp` <br> `from coptpy import COPT` | |
-| 创建环境 | `env = gp.Env()`（可省略，`Model()` 会隐式创建默认环境） | `env = cp.Envr()` | COPT 始终显式创建环境，许可与资源的归属一目了然 |
+| 创建环境 | `env = gp.Env()`（可省略，`Model()` 会隐式创建默认环境） | `env = cp.Envr()` | COPT 需要显式创建环境，模型通过环境创建 |
 | 创建模型 | `m = gp.Model("name", env=env)` | `m = env.createModel("name")` | 模型由环境创建 |
-| 从文件创建模型 | `m = gp.read("model.mps")` | `m = env.createModel()` <br> `m.read("model.mps")` | COPT 统一通过模型对象读取，读入的模型自然归属于指定环境 |
+| 从文件创建模型 | `m = gp.read("model.mps")` | `m = env.createModel()` <br> `m.read("model.mps")` | COPT 通过模型对象读取文件 |
 | 复制模型 | `m2 = m.copy()` | `m2 = m.clone()` | |
-| 释放资源 | `m.dispose()` / `env.dispose()` <br> 或 `with gp.Env() as env, gp.Model(env=env) as m:` | 不需要显式释放，对象随 Python 垃圾回收自动销毁 | COPT 没有 `dispose()`，文档也未定义 `with` 用法，让对象随作用域结束即可。`env.close()` 只用于断开与浮动 / 集群许可服务器的连接 |
+| 释放资源 | `m.dispose()` / `env.dispose()` <br> 或 `with gp.Env() as env, gp.Model(env=env) as m:` | 不需要显式释放，对象随 Python 垃圾回收自动销毁 | COPT 没有 `dispose()`，文档也未定义 `with` 用法，对象随作用域结束自动回收。`env.close()` 只用于断开浮动 / 集群许可服务器的连接 |
 | 同步修改 | `m.update()` | 建模过程中不需要 | 见下方说明 |
 
-!!! tip "在 COPT 中建模不需要 `update()` 这一步"
+!!! tip "COPT 不需要 `update()`"
 
-    Gurobi 采用惰性更新：加变量、改边界、删除等修改会先排队，直到调用 `m.update()`（或 `optimize()`、`write()`）才生效；Gurobi 文档特别提醒，忘记调用不会报错，查询只会悄悄返回上一次 update 时的旧值。COPT 的官方示例里没有这一步：加变量、加约束、设参数之后直接求解和查询即可。coptpy 也提供 `Model.update()`，文档定义其用途为"更新模型的数值范围以及已删除的变量和约束"——只在删除元素之后需要读取系数范围等统计量时才用得到。迁移时通常可以直接删掉所有 `m.update()` 调用。
+    Gurobi 采用惰性更新：添加变量、修改边界、删除元素等操作会先排队，在调用 `m.update()`、`optimize()` 或 `write()` 时才生效。Gurobi 文档指出，忘记调用 `update()` 不会报错，查询返回的是上一次更新时的值。COPT 的官方示例中没有这一步骤：添加变量和约束、设置参数后可以直接求解和查询。coptpy 提供的 `Model.update()` 按文档定义用于"更新模型的数值范围以及已删除的变量和约束"，只在删除元素后需要读取系数范围等统计量时才需要调用。迁移时可以删除代码中的 `m.update()` 调用。
 
-!!! tip "参数统一在模型层设置"
+!!! tip "参数只在模型层设置"
 
-    Gurobi 的参数既可以设在 `Env` 上也可以设在 `Model` 上；模型在创建时复制一份环境，此后对原环境的改动不再影响模型，两层叠加时需要弄清这个时序。COPT 只有一处：所有求解参数都在 `Model` 上，`Envr` 只负责许可和资源，读代码时不必回头追溯环境配置。多个模型共用一套参数时，用 `m.read("settings.par")` 或一个小函数统一设置即可。
+    Gurobi 的参数可以设在 `Env` 上，也可以设在 `Model` 上；模型在创建时复制当前环境的参数，之后对环境的修改不再影响该模型。COPT 的求解参数全部设在 `Model` 上，`Envr` 只管理许可证和资源。多个模型共用一套参数时，可以用 `m.read("settings.par")` 读入参数文件，或用一个函数统一设置。
 
 ## 2.2 变量
 
@@ -43,7 +43,7 @@
 | 修改边界 | `x.LB = 0; x.UB = 5` | `x.lb = 0; x.ub = 5` | |
 | 批量读 / 写属性 | `m.getAttr("LB", vars)` / `m.setAttr("LB", vars, vals)` | `m.getInfo(COPT.Info.LB, vars)` / `m.setInfo(COPT.Info.LB, vars, vals)` | Gurobi 用字符串属性名，COPT 用 `COPT.Info.*` 常量 |
 
-**边界与无穷大**：`GRB.INFINITY` 是 `1e100`，`COPT.INFINITY` 是 `1e30`。按 COPT 文档，绝对值达到 `1e30` 的边界即被视为无穷，所以旧代码里残留的 `1e100` 也能被正确识别为无界；但反过来，如果你在 COPT 侧读出 `1e30` 再原样喂给 Gurobi，Gurobi 会把它当成一个有限的大数。建议全部改用 `COPT.INFINITY` 常量。
+**边界与无穷大**：`GRB.INFINITY` 是 `1e100`，`COPT.INFINITY` 是 `1e30`。按 COPT 文档，绝对值达到 `1e30` 的边界即被视为无穷，因此旧代码中的 `1e100` 在 COPT 中同样被识别为无界。反向则不成立：从 COPT 读出的 `1e30` 传给 Gurobi 时会被当作有限值。建议统一使用 `COPT.INFINITY` 常量。
 
 **变量的 `tupledict`**：`addVars` 返回的对象在两边都是 `tupledict`，支持 `.sum(...)`、`.prod(coeff_dict)` 以及普通 dict 的方法，用法相同。
 
@@ -69,9 +69,9 @@
 | 读取系数 / 行 / 列 | `m.getCoeff(c, x)` / `m.getRow(c)` / `m.getCol(x)` | 同名 | |
 | 读取系数矩阵 | `m.getA()` | `m.getA()` | 均返回 SciPy 稀疏矩阵 |
 
-!!! tip "COPT 的约束天然支持两侧界"
+!!! tip "COPT 的约束统一为两侧界形式"
 
-    Gurobi 的线性约束由 `Sense`（`<`/`>`/`=`）和 `RHS` 描述，区间约束需要专门的 `addRange`，并在内部通过引入辅助变量来实现。COPT 把每条线性约束统一表示为 `lb ≤ expr ≤ ub`，用 `c.lb` 和 `c.ub` 描述：`x + y <= 10` 存储为 `lb = -COPT.INFINITY, ub = 10`；`x + y >= 1` 为 `lb = 1, ub = +COPT.INFINITY`；`x + y == 3` 为 `lb = ub = 3`；区间约束用 `addBoundConstr` 直接表达，不需要辅助变量，两侧界也可以在求解后独立修改。迁移时对应的改动是：
+    Gurobi 的线性约束由 `Sense`（`<`/`>`/`=`）和 `RHS` 描述，区间约束需要用 `addRange`，Gurobi 内部通过引入辅助变量实现。COPT 把每条线性约束统一表示为 `lb ≤ expr ≤ ub`，用 `c.lb` 和 `c.ub` 描述：`x + y <= 10` 存储为 `lb = -COPT.INFINITY, ub = 10`；`x + y >= 1` 为 `lb = 1, ub = +COPT.INFINITY`；`x + y == 3` 为 `lb = ub = 3`。区间约束用 `addBoundConstr` 直接表示，不引入辅助变量；求解后可以分别修改 `lb` 和 `ub`。迁移时的对应修改：
 
     - 读 `c.RHS` 的代码改成读 `c.ub`（≤ 约束）或 `c.lb`（≥ 约束）；
     - 求解后"改右端项"的代码改成给 `c.lb` / `c.ub` 赋值；
@@ -100,7 +100,7 @@
 | 读取状态 | `m.Status` | `m.status` |
 | 是否有可用解 | `m.SolCount > 0` | `m.hassol`（旧属性 `hasmipsol` / `haslpsol` 在 8.0 文档中已标记为弃用） |
 
-状态码对照（两侧都请使用常量，**数值不要硬编码**）：
+状态码对照如下。两边都应使用常量，不要写数值：
 
 | 含义 | Gurobi 常量（值） | COPT 常量（值） | 说明 |
 |---|---|---|---|
@@ -118,7 +118,7 @@
 | 内部错误导致未完成 | 无 | `COPT.UNFINISHED` (9) | |
 | 非凸 / 非线性问题的局部最优、局部不可行 | `GRB.LOCALLY_OPTIMAL` (18) / `GRB.LOCALLY_INFEASIBLE` (19) | `COPT.LOCAL_OPTIMAL` (20) / `COPT.LOCAL_INFEASIBLE` (21) | Gurobi 13 新增；第 4 章 |
 
-一个常见的模式——"到时间上限了，但有可行解就用"：
+常见写法：达到时间上限但已有可行解时，使用该解：
 
 <div class="grid side-by-side" markdown>
 
@@ -155,7 +155,7 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 | **基状态** | **`x.VBasis`** | **`x.basis`** | 值的编码不同（见 2.8 节） |
 | **MIP 初始解** | **`x.Start = v`** | **`m.setMipStart(x, v)` + `m.loadMipStart()`** | 第 3 章 |
 | **解池中第 k 个解** | **`m.Params.SolutionNumber = k; x.PoolNX`** | **`m.getPoolSolution(k, vars)`** | Gurobi 13 起 `Xn` 已弃用，改为 `PoolNX`；第 4 章 |
-| 灵敏度分析 | `x.SAObjLow/Up`、`x.SALBLow/Up`、`x.SAUBLow/Up` | `x.saobjlow/up`、`x.salblow/up`、`x.saublow/up` | COPT 按需计算：设 `ReqSensitivity = 1` 后可用，不需要时不产生额外开销 |
+| 灵敏度分析 | `x.SAObjLow/Up`、`x.SALBLow/Up`、`x.SAUBLow/Up` | `x.saobjlow/up`、`x.salblow/up`、`x.saublow/up` | COPT 默认不计算，需要时设置 `ReqSensitivity = 1` 开启 |
 | **无界方向** | **`x.UnbdRay`** | **`x.primalray`** | 两边都需显式开启：Gurobi `InfUnbdInfo = 1`，COPT `ReqFarkasRay = 1` |
 | **IIS 成员** | **`x.IISLB` / `x.IISUB`** | **`x.getLowerIIS()` / `x.getUpperIIS()`** | 需先 `computeIIS()` |
 | 索引 | `x.index` | `x.index` | |
@@ -213,7 +213,7 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 |---|---|---|
 | `m.Params.TimeLimit = 60` | `m.Param.TimeLimit = 60` | 属性式（注意 Gurobi 是 `Params`，COPT 是 `Param`） |
 | `m.setParam(GRB.Param.TimeLimit, 60)` | `m.setParam(COPT.Param.TimeLimit, 60)` | 常量式，两边文档的推荐写法 |
-| `m.setParam("TimeLimit", 60)` | `m.setParam("TimeLimit", 60)` | 字符串式两边完全相同，适合做参数映射表（Gurobi 文档明确支持；COPT 的 `COPT.Param.TimeLimit` 常量值即字符串 `"TimeLimit"`，为实测结果） |
+| `m.setParam("TimeLimit", 60)` | `m.setParam("TimeLimit", 60)` | 两边写法相同。Gurobi 文档明确支持字符串形式；COPT 侧为实测结果（`COPT.Param.TimeLimit` 的值即字符串 `"TimeLimit"`） |
 | `m.Params.TimeLimit`（读取） | `m.Param.TimeLimit` 或 `m.getParam(COPT.Param.TimeLimit)` | |
 | `m.getParamInfo("TimeLimit")` | `m.getParamInfo(COPT.Param.TimeLimit)` | 同名，但返回的元组结构不同：Gurobi 为 (名称, 类型, 当前值, 最小值, 最大值, 默认值)；COPT 为 (名称, 当前值, 默认值, 最小值, 最大值)（依据 coptpy 方法的文档字符串） |
 | `m.resetParams()` | `m.resetParam()` | |
@@ -250,12 +250,12 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 | 日志文件 | `LogFile` | 无参数，用 `m.setLogFile("x.log")` | |
 | 初始解处理 | `StartNodeLimit` | `MipStartMode` / `MipStartNodeLimit` | 第 3 章 |
 | 调参器时间 | `TuneTimeLimit` | `TuneTimeLimit` | 一致 |
-| 灵敏度分析 | 自动可用 | `ReqSensitivity = 1` | COPT 按需开启，避免不必要的计算开销 |
+| 灵敏度分析 | 自动可用 | `ReqSensitivity = 1` | COPT 默认关闭，需要时开启 |
 | Farkas 证书 / 无界方向 | `InfUnbdInfo = 1` | `ReqFarkasRay = 1` | |
 
 !!! tip "从 COPT 默认参数开始"
 
-    COPT 的算法类参数（`LpMethod`、`Presolve`、`CutLevel`、`HeurLevel`、`Scaling`、`Crossover` 的自动模式等）默认值都是 -1，即由求解器根据模型特征自动选择。在 Gurobi 上调出来的参数组合针对的是另一套算法实现，照搬到 COPT 通常没有意义，甚至可能拖慢求解。建议迁移时只保留业务上必须的限制（时间上限、gap、线程数），先用默认参数跑一遍基准；性能相关的参数留给第 6 章的调参流程，COPT 内置的调参器（`m.tune()`）可以在那一步系统地搜索。
+    COPT 的算法类参数（`LpMethod`、`Presolve`、`CutLevel`、`HeurLevel`、`Scaling` 等）默认值为 -1，表示由求解器根据模型特征自动选择。在 Gurobi 上调好的参数组合针对的是 Gurobi 的算法实现，直接照搬到 COPT 通常没有意义，也可能降低性能。建议迁移时只保留业务上必需的限制（时间上限、gap、线程数），先用默认参数运行基准测试；性能参数的调整见第 6 章，可以使用 COPT 的调参器 `m.tune()`。
 
 ## 2.8 常量
 
@@ -272,7 +272,7 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 
 ## 2.9 文件读写
 
-两边的 `m.write(filename)` 都按后缀判断格式。读取时有一点不同：Gurobi 的模型文件要用模块级 `gp.read()`，`m.read()` 只读基、初始解、参数等辅助文件；COPT 统一用 `m.read()`，模型与辅助文件都按后缀识别。
+两边的 `m.write(filename)` 都按后缀判断格式。读取时有区别：Gurobi 的模型文件要用模块级 `gp.read()`，`m.read()` 只读基、初始解、参数等辅助文件；COPT 统一用 `m.read()`，模型与辅助文件都按后缀识别。
 
 | 内容 | Gurobi 后缀 | COPT 后缀 | 说明 |
 |---|---|---|---|
@@ -292,7 +292,7 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 
 ## 2.10 本章未覆盖的内容
 
-以下功能两边都有，但接口设计差异较大，无法用一行对照说清，放在后续章节展开：
+以下功能两边都提供，但接口设计差异较大，将在后续章节单独说明：
 
 - **MIP 初始解**：`x.Start` → `setMipStart` + `loadMipStart`（第 3 章）
 - **回调**：Gurobi 的函数式回调 `optimize(callback)` → COPT 继承 `CallbackBase` 类（第 3 章）
