@@ -8,7 +8,7 @@ site_url: https://redpanda997.github.io/gurobi-to-copt/
 repo_url: https://github.com/redpanda997/gurobi-to-copt
 repo_name: redpanda997/gurobi-to-copt
 edit_uri: edit/main/docs/
-copyright: Copyright &copy; Cardinal Operations
+copyright: Copyright &copy; 2026 redpanda997
 
 theme:
   name: material
@@ -96,9 +96,9 @@ nav:
 
 extra:
   social:
-    - icon: fontawesome/solid/globe
-      link: https://copt.shanshu.ai
-      name: COPT
+    - icon: fontawesome/brands/github
+      link: https://github.com/redpanda997/gurobi-to-copt
+      name: GitHub
     - icon: fontawesome/solid/book
       link: https://guide.coap.online/copt/en-doc/
       name: COPT 文档
