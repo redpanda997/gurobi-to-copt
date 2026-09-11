@@ -2,11 +2,11 @@
 
 !!! info "适用版本"
 
-    本文所有代码在 gurobipy 13.0.3 与 coptpy 8.0.6 上实际运行验证。API 随版本演进，请以 [COPT 官方文档](https://guide.coap.online/copt/zh-doc/) 为最终依据。
+    本文所有代码在 gurobipy 13.0.3 与 coptpy 8.0.6 上实际运行验证。API 随版本演进，请以 [Gurobi 官方文档](https://docs.gurobi.com/) 与 [COPT 官方文档](https://guide.coap.online/copt/zh-doc/) 为最终依据。
 
 !!! info "适用读者"
 
-    正在使用 gurobipy 建模、准备把现有代码迁移到 COPT 的开发者。使用 Pyomo、JuMP、CVXPY、PuLP、AMPL、GAMS 等建模框架的读者，可以直接跳到第 5 章——你们通常只需要改一个求解器名字。
+    正在使用 gurobipy 建模、准备把现有代码迁移到 COPT 的开发者。通过建模框架而不是直接调用求解器 API 的读者，可以直接跳到第 5 章——通常只需要改一个求解器名字。
 
 ## 全文大纲
 
