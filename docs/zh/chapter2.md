@@ -1,6 +1,6 @@
 # 第 2 章 核心对照表
 
-本章按建模流程的顺序给出逐项对照：环境与模型 → 变量 → 约束 → 目标 → 求解与状态 → 结果读取 → 参数 → 常量 → 文件读写。每张表都可以单独当速查表使用。
+本章按建模流程的顺序展开：环境与模型 → 变量 → 约束 → 目标与表达式 → 求解与状态 → 结果读取 → 参数 → 常量 → 文件读写。每节先用一两段代码说明该环节的差别在哪里，再给出完整的对照表；表格可以单独作为速查表使用。本章的代码片段承接第 1 章的写法：`gp`、`GRB`、`cp`、`COPT` 已导入，`m` 是模型，`x`、`y`、`z` 是变量，`c` 是约束。
 
 以下三条规则概括了两套 API 的主要差异：
 
@@ -9,6 +9,31 @@
 3. **状态码数值不同。** `GRB.OPTIMAL == 2` 而 `COPT.OPTIMAL == 1`。代码中直接写数字而不是常量的判断，迁移后会失效。
 
 ## 2.1 环境与模型生命周期
+
+Gurobi 的模型可以直接创建，环境对象是可选的；COPT 的模型必须由环境对象创建：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+env = gp.Env()                     # 可省略，Model() 会隐式创建默认环境
+m = gp.Model("demo", env=env)
+```
+
+```python title="COPT"
+env = cp.Envr()
+m = env.createModel("demo")
+```
+
+</div>
+
+使用浮动或集群许可时，COPT 在创建环境前用 `EnvrConfig` 指定许可服务器：
+
+```python
+cfg = cp.EnvrConfig()
+cfg.set(COPT.CLIENT_CLUSTER, "192.168.9.9")   # 浮动许可改用 COPT.CLIENT_FLOATING
+env = cp.Envr(cfg)
+m = env.createModel("demo")
+```
 
 | 操作 | Gurobi | COPT | 说明 |
 |---|---|---|---|
@@ -30,6 +55,24 @@
 
 ## 2.2 变量
 
+单个变量的创建方式两边相同。批量创建时，Gurobi 的 `name` 参数在 COPT 中叫 `nameprefix`；批量读取属性时，Gurobi 的 `getAttr` 对应 COPT 的 `getInfo`。两者都接受 list 或 `tupledict`，并返回同类型的容器：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+x = m.addVars(3, 2, vtype=GRB.BINARY, name="x")
+m.optimize()
+vals = m.getAttr("X", x)                 # tupledict，键与 x 相同
+```
+
+```python title="COPT"
+x = m.addVars(3, 2, vtype=COPT.BINARY, nameprefix="x")
+m.solve()
+vals = m.getInfo(COPT.Info.Value, x)     # tupledict，键与 x 相同
+```
+
+</div>
+
 | 操作 | Gurobi | COPT | 说明 |
 |---|---|---|---|
 | 单个变量 | `m.addVar(lb=0, ub=GRB.INFINITY, obj=0, vtype=GRB.CONTINUOUS, name="x")` | `m.addVar(lb=0, ub=COPT.INFINITY, obj=0, vtype=COPT.CONTINUOUS, name="x")` | 签名一致 |
@@ -48,6 +91,43 @@
 **变量的 `tupledict`**：`addVars` 返回的对象在两边都是 `tupledict`，支持 `.sum(...)`、`.prod(coeff_dict)` 以及普通 dict 的方法，用法相同。
 
 ## 2.3 约束
+
+用比较运算符写约束的方式两边相同，`addConstrs` 加生成器的批量写法也相同。差别在两处：区间约束的内部表示，以及读取右端项的属性。
+
+区间约束 `lb ≤ expr ≤ ub` 两边都可以写成 `expr == [lb, ub]`，也都有专用方法：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+m.addRange(x + y, 1, 5, name="r1")
+m.addConstr(x + y == [1, 5], name="r2")   # 与上一行等价
+```
+
+```python title="COPT"
+m.addBoundConstr(x + y, 1, 5, name="r1")
+m.addConstr(x + y == [1, 5], name="r2")   # 与上一行等价
+```
+
+</div>
+
+Gurobi 把区间约束存成等式约束并增加一个辅助变量，模型的变量数因此加一；COPT 直接存为 `lb ≤ expr ≤ ub`，不增加变量。
+
+读取约束的右端项时，Gurobi 用 `Sense` 和 `RHS`，COPT 用 `lb` 和 `ub`：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+c = m.addConstr(x + y <= 10, name="c")
+m.update()
+print(c.Sense, c.RHS)                     # < 10.0
+```
+
+```python title="COPT"
+c = m.addConstr(x + y <= 10, name="c")
+print(c.lb, c.ub)                         # -1e+30 10.0
+```
+
+</div>
 
 | 操作 | Gurobi | COPT | 说明 |
 |---|---|---|---|
@@ -77,7 +157,27 @@
     - 求解后"改右端项"的代码改成给 `c.lb` / `c.ub` 赋值；
     - `addRange` 改为 `addBoundConstr`。
 
-## 2.4 目标函数
+## 2.4 目标函数与表达式
+
+`setObjective` 的用法相同，用运算符和 `quicksum` 构造的表达式也不需要改动。手工调用 `LinExpr` 的方法逐项添加时要注意参数顺序：Gurobi 的 `addTerms` 先写系数再写变量，COPT 的 `addTerm`/`addTerms` 先写变量再写系数：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+expr = gp.LinExpr(1.0)                    # 常数项 1.0
+expr.addTerms(2.0, x)                     # 系数在前，变量在后
+expr.addTerms([3.0, 4.0], [y, z])
+m.setObjective(expr, GRB.MINIMIZE)
+```
+
+```python title="COPT"
+expr = cp.LinExpr(1.0)
+expr.addTerm(x, 2.0)                      # 变量在前，系数在后
+expr.addTerms([y, z], [3.0, 4.0])
+m.setObjective(expr, COPT.MINIMIZE)
+```
+
+</div>
 
 | 操作 | Gurobi | COPT | 说明 |
 |---|---|---|---|
@@ -88,8 +188,12 @@
 | 变量的目标系数 | `x.Obj` | `x.obj` | |
 | 多目标 | `m.setObjectiveN(expr, index, priority, weight, ...)` | `m.setObjectiveN(index, expr, sense, priority, weight, ...)` | **参数顺序不同**，第 4 章 |
 | 矩阵形式目标 | `m.setMObjective(...)` | `m.setMObjective(...)` | 第 4 章 |
+| 线性表达式逐项添加 | `expr.addTerms(coeffs, vars)` | `expr.addTerm(var, coeff)` / `expr.addTerms(vars, coeffs)` | **参数顺序相反**，见上文 |
+| 表达式常数项 | `gp.LinExpr(1.0)` / `expr.getConstant()` | `cp.LinExpr(1.0)` / `expr.getConstant()` | 一致 |
 
 ## 2.5 求解与状态码
+
+求解方法名不同（`optimize()` 与 `solve()`），状态常量同名但数值不同，判断是否已有可用解的属性也不同：
 
 | 操作 | Gurobi | COPT |
 |---|---|---|
@@ -139,6 +243,40 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 </div>
 
 ## 2.6 结果读取：属性对照
+
+单个变量或约束的结果按属性读取，批量读取用模型方法。Gurobi 的 `getAttr` 对应 COPT 的 `getInfo`，COPT 另有 `getValues`、`getDuals` 等不带参数的快捷方法：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+print(x.X, c.Pi, m.ObjVal)
+vals = m.getAttr("X", m.getVars())
+duals = m.getAttr("Pi", m.getConstrs())
+```
+
+```python title="COPT"
+print(x.x, c.pi, m.objval)
+vals = m.getValues()        # 或 m.getInfo(COPT.Info.Value, m.getVars())
+duals = m.getDuals()        # 或 m.getInfo(COPT.Info.Dual, m.getConstrs())
+```
+
+</div>
+
+给 MIP 提供初始解的写法不同。Gurobi 给变量的 `Start` 属性赋值；COPT 用 `setMipStart` 设置，最后调用一次 `loadMipStart` 载入：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+x.Start = 1.0
+y.Start = 0.0
+```
+
+```python title="COPT"
+m.setMipStart([x, y], [1.0, 0.0])
+m.loadMipStart()
+```
+
+</div>
 
 下表 COPT 列给出的是 COPT 文档中的小写写法。**加粗**的行是名字本身不同、必须修改的属性；其余行两边同名，按 COPT 文档可用原始大小写或全小写访问，Gurobi 写法可以直接保留。
 
@@ -207,11 +345,29 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 
 ## 2.7 参数
 
+参数名大多相同，设置方式有三种，两边都支持属性式、常量式和字符串式：
+
+<div class="grid side-by-side" markdown>
+
+```python title="Gurobi"
+m.Params.TimeLimit = 60
+m.setParam(GRB.Param.MIPGap, 1e-3)
+m.setParam("Threads", 4)
+```
+
+```python title="COPT"
+m.Param.TimeLimit = 60                # 也可写作 m.param.timelimit = 60
+m.setParam(COPT.Param.RelGap, 1e-3)   # MIPGap 在 COPT 中叫 RelGap
+m.setParam("Threads", 4)
+```
+
+</div>
+
 **设置方式**
 
 | Gurobi | COPT | 说明 |
 |---|---|---|
-| `m.Params.TimeLimit = 60` | `m.Param.TimeLimit = 60` | 属性式（注意 Gurobi 是 `Params`，COPT 是 `Param`） |
+| `m.Params.TimeLimit = 60` | `m.Param.TimeLimit = 60` | 属性式（Gurobi 是 `Params`，COPT 是 `Param`；COPT 团队的对照表中写作 `m.param.timelimit`，同样有效） |
 | `m.setParam(GRB.Param.TimeLimit, 60)` | `m.setParam(COPT.Param.TimeLimit, 60)` | 常量式，两边文档的推荐写法 |
 | `m.setParam("TimeLimit", 60)` | `m.setParam("TimeLimit", 60)` | 两边写法相同。Gurobi 文档明确支持字符串形式；COPT 侧为实测结果（`COPT.Param.TimeLimit` 的值即字符串 `"TimeLimit"`） |
 | `m.Params.TimeLimit`（读取） | `m.Param.TimeLimit` 或 `m.getParam(COPT.Param.TimeLimit)` | |
@@ -258,6 +414,8 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
     COPT 的算法类参数（`LpMethod`、`Presolve`、`CutLevel`、`HeurLevel`、`Scaling` 等）默认值为 -1，表示由求解器根据模型特征自动选择。在 Gurobi 上调好的参数组合针对的是 Gurobi 的算法实现，直接照搬到 COPT 通常没有意义，也可能降低性能。建议迁移时只保留业务上必需的限制（时间上限、gap、线程数），先用默认参数运行基准测试；性能参数的调整见第 6 章，可以使用 COPT 的调参器 `m.tune()`。
 
 ## 2.8 常量
+
+常量名称基本一致，需要注意的是 `INFINITY` 的数值和基状态的编码不同：
 
 | 含义 | Gurobi | COPT | 说明 |
 |---|---|---|---|
