@@ -230,14 +230,20 @@ Besides the five changes from 1.3, this example has three more differences, whic
 
 ## 1.5 Chapter checklist
 
-To migrate a gurobipy script, apply the following seven replacements first. Most small and medium scripts run after this:
+To migrate a gurobipy script, apply the following seven basic replacements first. Except for item 3, they are the core rules listed in the [COPTPY-GUROBIPY](https://github.com/leavesgrp/COPTPY-GUROBIPY) comparison table maintained by the COPT team:
 
-1. `import gurobipy as gp` → `import coptpy as cp`; `GRB` → `COPT`
-2. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
-3. `m.optimize()` → `m.solve()`
-4. Replace every hard-coded status number (e.g. `== 2`) with a constant such as `COPT.OPTIMAL`
-5. `m.Params.X = v` → `m.Param.X = v` (singular `Param` instead of `Params`) or `m.setParam(COPT.Param.X, v)`, and check the parameter name (2.7)
-6. `name=` → `nameprefix=` in `addVars` / `addConstrs`
-7. Renamed attributes: `VarName`/`ConstrName` → `name`, `X` → `x`, `Pi` → `pi`, `RC` → `rc`, `NumVars`/`NumConstrs` → `cols`/`rows`, `Runtime` → `solvingtime`, `MIPGap` → `bestgap` (full list in 2.6)
+1. `import gurobipy as gp` → `import coptpy as cp`
+2. `GRB` → `COPT`
+3. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
+4. `name=` → `nameprefix=` in `addVars` / `addConstrs`
+5. `m.optimize()` → `m.solve()`
+6. `m.getAttr("X", vars)` → `m.getInfo(COPT.Info.Value, vars)`
+7. `VarName`/`ConstrName` → `name`
 
-If the code uses callbacks, MIP starts (`x.Start`), `addRange`, or modifies the model after solving, continue with Chapters 2 and 3.
+Then check three more points:
+
+8. Replace every hard-coded status number (e.g. `== 2`) with a constant such as `COPT.OPTIMAL`
+9. `m.Params.X = v` → `m.Param.X = v` (singular `Param` instead of `Params`) or `m.setParam(COPT.Param.X, v)`, and check the parameter name (2.7)
+10. Other renamed attributes: `X` → `x`, `Pi` → `pi`, `RC` → `rc`, `NumVars`/`NumConstrs` → `cols`/`rows`, `Runtime` → `solvingtime`, `MIPGap` → `bestgap` (full list in 2.6)
+
+Most small and medium scripts run after these ten items. If the code uses callbacks, MIP starts (`x.Start`), `addRange`, hand-built `LinExpr` objects, or modifies the model after solving, continue with Chapters 2 and 3.
