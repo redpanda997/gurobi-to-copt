@@ -300,4 +300,4 @@ The following features exist on both sides but differ enough in design that a on
 - **Matrix API**, **multiple objectives**, **solution pool**, **IIS and feasibility relaxation**, **tuner**, **conic constraints and nonconvex / nonlinear models** (Chapter 4)
 
 
-*Chapter 3 and later chapters will be published progressively. If you hit a usage pattern this guide does not cover, please report it through COPT technical support — frequently asked questions will be folded into later chapters.*
+*Chapter 3 and later chapters will be published progressively. If you hit a usage pattern this guide does not cover, please open an issue in the [GitHub repository](https://github.com/redpanda997/gurobi-to-copt/issues) — frequently asked questions will be folded into later chapters.*
