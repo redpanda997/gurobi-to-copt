@@ -5,7 +5,7 @@ hide:
 
 # 第 1 章 十分钟快速上手
 
-本章的目标是让你在十分钟内把第一个 Gurobi 模型跑在 COPT 上，并直观感受两套 API 有多接近。
+本章介绍安装、许可证配置和两个完整示例，说明如何把一个 Gurobi 模型改为在 COPT 上运行，以及两套 API 的对应关系。
 
 ## 1.1 安装
 
@@ -42,7 +42,7 @@ print(COPT.VERSION_MAJOR, COPT.VERSION_MINOR, COPT.VERSION_TECHNICAL)   # 例如
 
 本文所有示例都是小规模模型，任何类型的 COPT 许可证都可以运行。
 
-COPT 启动时会在日志里逐行打印它检查过的许可证位置，排查许可证问题时先看这几行：
+COPT 启动时会在日志中逐行打印检查过的许可证位置，排查许可证问题时可以先查看这几行：
 
 ```
 [INFO] checks license for COPT v8.0.6 20260807
@@ -112,21 +112,21 @@ A = 70
 B = 15
 ```
 
-逐行对照，这个例子里一共只改了五处：
+两段代码逐行对照，共有五处不同：
 
 | # | Gurobi | COPT | 说明 |
 |---|---|---|---|
 | 1 | `import gurobipy as gp` / `from gurobipy import GRB` | `import coptpy as cp` / `from coptpy import COPT` | 常量命名空间 `GRB` → `COPT` |
 | 2 | `m = gp.Model("production")` | `env = cp.Envr()` <br> `m = env.createModel("production")` | COPT 需要先显式创建环境 `Envr`，再由环境创建模型 |
 | 3 | `m.optimize()` | `m.solve()` | 求解方法名不同 |
-| 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | 状态常量名相同，但**数值不同**（2 与 1），务必使用常量而不是数字 |
+| 4 | `GRB.OPTIMAL` | `COPT.OPTIMAL` | 状态常量名相同，但**数值不同**（2 与 1），应使用常量，不要写数字 |
 | 5 | `v.VarName` / `v.X` | `v.name` / `v.x` | 变量名属性叫 `name`，解值叫 `x`；`m.ObjVal`、`m.Status` 在 COPT 里可以原样使用，见下文 |
 
-关于第 5 点有一个好消息：COPT 文档规定，模型属性和变量 / 约束信息既可以用**原始大小写**访问（`m.ObjVal`、`m.Status`、`x.LB`、`x.UB`、`x.Obj`、`c.Slack`），也可以用**全小写**访问（`m.objval`、`x.lb`）。所以凡是两边名字相同的属性，Gurobi 写法可以直接保留。真正需要改的是名字本身不同的属性：`VarName` → `name`、`X` → `x`、`RC` → `rc`、`Pi` → `pi`、`NumVars` → `cols`、`Runtime` → `solvingtime` 等，第 2 章有完整对照表。（实测中 coptpy 对属性名的匹配并不区分大小写，`x.X`、`c.Pi` 也能运行，但这不在文档保证范围内，本文不依赖它。）本文的 COPT 代码统一使用 COPT 文档中的小写写法。
+第 5 点需要补充说明。COPT 文档规定，模型属性和变量 / 约束信息既可以按**原始大小写**访问（`m.ObjVal`、`m.Status`、`x.LB`、`x.UB`、`x.Obj`、`c.Slack`），也可以按**全小写**访问（`m.objval`、`x.lb`）。因此两边名称相同的属性，Gurobi 写法可以保留；需要修改的是名称本身不同的属性，如 `VarName` → `name`、`X` → `x`、`RC` → `rc`、`Pi` → `pi`、`NumVars` → `cols`、`Runtime` → `solvingtime`，完整对照见第 2 章。实测中 coptpy 对属性名的匹配不区分大小写，`x.X`、`c.Pi` 也能运行，但文档未作此保证，本文不依赖这一行为。本文的 COPT 代码统一使用文档中的小写写法。
 
 ## 1.4 一个更典型的例子：tupledict、quicksum 与影子价格
 
-真实项目里的 gurobipy 代码很少只有两个变量，更多是 `addVars` + `tupledict` + `quicksum` + `addConstrs` 的组合。下面是一个运输问题，同时展示参数设置和对偶值读取：
+实际项目中的 gurobipy 代码通常使用 `addVars`、`tupledict`、`quicksum` 和 `addConstrs` 批量建模。下面以一个运输问题为例，同时展示参数设置和对偶值的读取。
 
 <div class="grid side-by-side" markdown>
 
@@ -218,7 +218,7 @@ Total cost = 770
   shadow price M3: 9
 ```
 
-除了 1.3 节的五处之外，这个例子新增了三处差异，它们也是迁移中出现频率最高的：
+除 1.3 节的五处外，这个例子还有三处差异，也是迁移中最常遇到的：
 
 | Gurobi | COPT | 说明 |
 |---|---|---|
@@ -226,11 +226,11 @@ Total cost = 770
 | `m.Params.OutputFlag = 0` | `m.setParam(COPT.Param.Logging, 0)` | 关闭日志的参数叫 `Logging` |
 | `addVars(..., name="ship")` <br> `addConstrs(..., name="supply")` | `addVars(..., nameprefix="ship")` <br> `addConstrs(..., nameprefix="supply")` | 批量创建时关键字参数叫 `nameprefix`，名字由 COPT 自动生成；生成的格式也不同：Gurobi 为 `ship[P1,M1]`，COPT 实测为 `ship(P1,M1)` |
 
-`tupledict`（含 `.sum()`、`.prod()`）、`quicksum`、`multidict`、`tuplelist` 在 coptpy 中都有同名实现，用法一致，这部分代码通常不需要改动。
+`tupledict`（含 `.sum()`、`.prod()`）、`quicksum`、`multidict`、`tuplelist` 在 coptpy 中都有同名实现，用法一致，这部分代码一般不需要改动。
 
 ## 1.5 本章检查清单
 
-把一段 gurobipy 代码迁到 COPT，先机械地过一遍这七项，多数中小型脚本到此就能跑通：
+迁移一段 gurobipy 代码时，先按以下七项逐条替换。多数中小型脚本完成这七项后即可运行：
 
 1. `import gurobipy as gp` → `import coptpy as cp`；`GRB` → `COPT`
 2. `gp.Model(...)` → `env = cp.Envr()` + `env.createModel(...)`
@@ -240,4 +240,4 @@ Total cost = 770
 6. `addVars`/`addConstrs` 的 `name=` → `nameprefix=`
 7. 改名的属性：`VarName`/`ConstrName` → `name`，`X` → `x`，`Pi` → `pi`，`RC` → `rc`，`NumVars`/`NumConstrs` → `cols`/`rows`，`Runtime` → `solvingtime`，`MIPGap` → `bestgap`（完整列表见 2.6 节）
 
-如果代码用到了回调、MIP 初始解（`x.Start`）、`addRange`、求解后再修改模型等，请继续阅读第 2、3 章。
+如果代码用到了回调、MIP 初始解（`x.Start`）、`addRange` 或求解后修改模型，请继续阅读第 2、3 章。
