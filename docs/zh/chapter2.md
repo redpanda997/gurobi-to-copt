@@ -300,4 +300,4 @@ if m.status == COPT.OPTIMAL or (m.status == COPT.TIMEOUT and m.hassol):
 - **矩阵接口**、**多目标**、**解池**、**IIS 与可行性松弛**、**调参器**、**锥约束与非凸/非线性**（第 4 章）
 
 
-*第 3 章及后续章节陆续发布。如果你在迁移中遇到本文未覆盖的用法，欢迎通过 COPT 技术支持渠道反馈，我们会把高频问题补进后续章节。*
+*第 3 章及后续章节陆续发布。如果你在迁移中遇到本文未覆盖的用法，欢迎在 [GitHub 仓库](https://github.com/redpanda997/gurobi-to-copt/issues) 提 issue，高频问题会补进后续章节。*
