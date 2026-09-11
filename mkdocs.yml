@@ -1,0 +1,104 @@
+# MkDocs Material configuration for the "Gurobi → COPT" migration guide.
+# Build locally:   pip install -r requirements.txt && mkdocs serve
+# Deploy:          pushed to `main` -> .github/workflows/deploy.yml publishes to GitHub Pages.
+
+site_name: 从 Gurobi 迁移到 COPT
+site_description: Gurobi 用户迁移到 COPT 求解器的实用指南（Python）
+site_url: https://redpanda997.github.io/gurobi-to-copt/
+repo_url: https://github.com/redpanda997/gurobi-to-copt
+repo_name: redpanda997/gurobi-to-copt
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; Cardinal Operations
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式
+  font:
+    text: Noto Sans SC
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - i18n:
+      docs_structure: folder
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: zh
+          name: 中文
+          default: true
+          build: true
+        - locale: en
+          name: English
+          build: true
+          site_name: Migrating from Gurobi to COPT
+          site_description: A practical guide for moving Python models from Gurobi to the COPT solver
+          nav_translations:
+            首页: Home
+            第 1 章 十分钟快速上手: "Chapter 1 · Up and running in ten minutes"
+            第 2 章 核心对照表: "Chapter 2 · Core mapping tables"
+
+nav:
+  - 首页: index.md
+  - 第 1 章 十分钟快速上手: chapter1.md
+  - 第 2 章 核心对照表: chapter2.md
+
+extra:
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://copt.shanshu.ai
+      name: COPT
+    - icon: fontawesome/solid/book
+      link: https://guide.coap.online/copt/en-doc/
+      name: COPT 文档

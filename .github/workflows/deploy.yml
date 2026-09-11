@@ -1,0 +1,36 @@
+# Builds the MkDocs site and publishes it to the `gh-pages` branch on every push to `main`.
+# One-time setup in the repository: Settings → Pages → Source: "Deploy from a branch",
+# Branch: gh-pages / (root). The first successful run creates that branch.
+name: Deploy docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install MkDocs and plugins
+        run: pip install -r requirements.txt
+
+      - name: Build (strict — fails on broken links or bad config)
+        run: mkdocs build --strict
+
+      - name: Publish to gh-pages
+        run: mkdocs gh-deploy --force --no-history

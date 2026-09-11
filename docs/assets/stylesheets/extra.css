@@ -1,0 +1,33 @@
+/* Wider content area so two code blocks fit side by side on desktop. */
+.md-grid {
+  max-width: 88rem;
+}
+
+/* Gurobi / COPT side-by-side code: two columns from ~56rem of content width,
+   stacked below that (phones, narrow windows). */
+.grid.side-by-side {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 27rem), 1fr));
+  gap: 0.6rem;
+  margin: 1em 0;
+}
+.grid.side-by-side > .highlight {
+  margin: 0;
+}
+.grid.side-by-side .highlight pre > code {
+  font-size: 0.68rem;
+}
+/* Tint the two code titles differently so the eye finds "which side is which". */
+.grid.side-by-side > .highlight:first-child > .filename {
+  border-left: 0.2rem solid #c0392b;   /* Gurobi */
+}
+.grid.side-by-side > .highlight:last-child > .filename {
+  border-left: 0.2rem solid #1f77b4;   /* COPT */
+}
+
+/* Mapping tables: keep code cells on one line, let the table scroll instead. */
+.md-typeset table:not([class]) code {
+  white-space: nowrap;
+}
+.md-typeset table:not([class]) {
+  font-size: 0.7rem;
+}
